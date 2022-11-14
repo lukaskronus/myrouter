@@ -14,7 +14,7 @@ env:
   DRIVER_REPO: https://github.com/Azexios/openwrt-r3p-mtk.git
   DRIVER_TAG: 21.02.3
   CONFIG_FILE: config/newifi3-openwrt-21.02.config
-  TZ: Asia\Ho_Chi_Minh
+  TZ: UTC
 
 jobs:
   compile:
