@@ -8,9 +8,9 @@ on:
 
 env:
   REPO_URL: https://github.com/openwrt/openwrt.git
-  REPO_BRANCH: v22.03.2
+  REPO_BRANCH: v21.02.5
   DRIVER_REPO: https://github.com/Azexios/openwrt-r3p-mtk.git
-  DRIVER_TAG: 22.03.2
+  DRIVER_TAG: main
   CONFIG_FILE: config/test_build.config
   TZ: UTC
 
@@ -94,7 +94,7 @@ jobs:
       if: steps.firmware.outputs.status == 'success' && !cancelled()
       run: |
         MSG="
-        Firmware: Newifi3 - OpenWRT-22.03
+        Firmware: Newifi3 - Demo
         Compiled on: ${{ env.FILE_DATE }}
         Download: ${{ steps.wetransfer.outputs.url }}
         "
