@@ -1,17 +1,15 @@
-name: Test build
+name: Newifi3 - ImmortalWRT
 
 on:
   push:
     paths:
-      - 'config/test_build.config'
+      - 'config/newifi3-immortalwrt.config'
   workflow_dispatch:
 
 env:
-  REPO_URL: https://github.com/openwrt/openwrt.git
-  REPO_BRANCH: v21.02.5
-  DRIVER_REPO: https://github.com/Azexios/openwrt-r3p-mtk.git
-  DRIVER_TAG: main
-  CONFIG_FILE: config/test_build.config
+  REPO_URL: https://github.com/immortalwrt/immortalwrt.git
+  REPO_BRANCH: v21.02.3
+  CONFIG_FILE: config/newifi3-immortalwrt.config
   TZ: UTC
 
 jobs:
@@ -45,9 +43,6 @@ jobs:
     - name: Preparation
       working-directory: ./openwrt
       run: |
-        git clone --depth 1 $DRIVER_REPO -b $DRIVER_TAG 
-        rsync -av ./openwrt-r3p-mtk/target/ ./target && rsync -av --delete ./openwrt-r3p-mtk/package/mt/ ./package/mt
-        sed -i '$a src-git small8 https://github.com/kenzok8/small-package.git' feeds.conf.default
         git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git package/luci-app-dnsproxy
         ./scripts/feeds update -a && ./scripts/feeds install -a
         sed -i 's/192.168.1.1/192.168.41.1/g' package/base-files/files/bin/config_generate
@@ -94,7 +89,7 @@ jobs:
       if: steps.firmware.outputs.status == 'success' && !cancelled()
       run: |
         MSG="
-        Firmware: Newifi3 - Demo
+        Firmware: Newifi3 - ImmortalWRT
         Compiled on: ${{ env.FILE_DATE }}
         Download: ${{ steps.wetransfer.outputs.url }}
         "
