@@ -1,6 +1,8 @@
 name: Newifi3 - ImmortalWRT
 
 on:
+  schedule:
+    - cron: '0 2 * * 6'
   push:
     paths:
       - 'config/newifi3-immortalwrt.config'
@@ -93,12 +95,22 @@ jobs:
         echo "::notice file=wetransfer.com::$(cat wetransfer.log | grep https)"
         echo "url=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
 
+    - name: Upload firmware to cowtransfer
+      id: cowtransfer
+      if: steps.firmware.outputs.status == 'success' && !cancelled()
+      run: |
+        curl -fsSL git.io/file-transfer | sh
+        ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
+        echo "::notice file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
+        echo "url=$(cat cowtransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+        
     - name: Telegram notification
       if: steps.firmware.outputs.status == 'success' && !cancelled()
       run: |
         MSG="
-        Firmware: Newifi3 - ImmortalWRT
+        Firmware: Newifi3 - OpenWRT-22.03
         Compiled on: ${{ env.FILE_DATE }}
         Download: ${{ steps.wetransfer.outputs.url }}
+        Mirror: ${{ steps.cowtransfer.outputs.url }}
         "
         curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_TO }}&text=${MSG}"
