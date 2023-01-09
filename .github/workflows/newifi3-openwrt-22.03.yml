@@ -12,7 +12,6 @@ env:
   REPO_URL: https://github.com/openwrt/openwrt.git
   REPO_BRANCH: v22.03.2
   DRIVER_REPO: https://github.com/Azexios/openwrt-r3p-mtk.git
-  DRIVER_TAG: 22.03.2
   CONFIG_FILE: config/newifi3-openwrt-22.03.config
   TZ: UTC
 
@@ -47,7 +46,7 @@ jobs:
     - name: Preparation
       working-directory: ./openwrt
       run: |
-        git clone --depth 1 $DRIVER_REPO -b $DRIVER_TAG 
+        git clone --depth 1 $DRIVER_REPO
         rsync -av ./openwrt-r3p-mtk/target/ ./target && rsync -av --delete ./openwrt-r3p-mtk/package/mt/ ./package/mt
         git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git package/luci-app-dnsproxy
         ./scripts/feeds update -a && ./scripts/feeds install -a
@@ -58,12 +57,19 @@ jobs:
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         cd openwrt && make defconfig
     
-    - name: Build firmware
+    - name: Download packages
+      working-directory: ./openwrt
+      run: |
+        make download -j$(nproc)
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: Compile the firmware
       id: firmware
       working-directory: ./openwrt
       run: |
         echo -e "$(nproc) thread build."
-        make -j$(($(nproc) + 1))
+        make -j$(nproc)
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=$(cat DEVICE_NAME)" >> $GITHUB_ENV
         echo "FILE_DATE=$(date +"%d-%m-%Y")" >> $GITHUB_ENV
@@ -73,6 +79,7 @@ jobs:
       if: steps.firmware.outputs.status == 'success' && !cancelled()
       run: |
         cd openwrt/bin/targets/*/*
+        rm -rf packages
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
     
     - name: Upload firmware directory
@@ -91,6 +98,15 @@ jobs:
         echo "::notice file=wetransfer.com::$(cat wetransfer.log | grep https)"
         echo "url=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
 
+    - name: Upload firmware to cowtransfer
+      id: cowtransfer
+      if: steps.organize.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
+      run: |
+        curl -fsSL git.io/file-transfer | sh
+        ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
+        echo "::notice file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
+        echo "url=$(cat wetransfer.log | grep https | cut -f3 -d" ")"
+        
     - name: Telegram notification
       if: steps.firmware.outputs.status == 'success' && !cancelled()
       run: |
