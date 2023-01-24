@@ -10,7 +10,6 @@ on:
 
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt.git
-  REPO_BRANCH: v21.02.3
   CONFIG_FILE: config/newifi3-immortalwrt.config
   TZ: UTC
 
@@ -36,12 +35,14 @@ jobs:
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
+        git clone --depth 1 $REPO_URL openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     
     - name: Preparation
       working-directory: ./openwrt
       run: |
+        git clone --depth 1 https://github.com/Azexios/openwrt-r3p-mtk.git
+        rsync -av ./openwrt-r3p-mtk/target/ ./target && rsync -av --delete ./openwrt-r3p-mtk/package/mt/ ./package/mt
         git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git package/luci-app-dnsproxy
         ./scripts/feeds update -a && ./scripts/feeds install -a
         sed -i 's/192.168.1.1/192.168.41.1/g' package/base-files/files/bin/config_generate
