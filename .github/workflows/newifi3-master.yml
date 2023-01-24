@@ -5,12 +5,12 @@ on:
     - cron: '0 2 * * 6'
   push:
     paths:
-      - 'config/newifi3-immortalwrt.config'
+      - 'config/newifi3-openwrt-master.config'
   workflow_dispatch:
 
 env:
-  REPO_URL: https://github.com/immortalwrt/immortalwrt.git
-  CONFIG_FILE: config/newifi3-immortalwrt.config
+  REPO_URL: https://github.com/openwrt/openwrt.git
+  CONFIG_FILE: config/newifi3-openwrt-master.config
   TZ: UTC
 
 jobs:
@@ -92,21 +92,12 @@ jobs:
         ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
         echo "::notice file=wetransfer.com::$(cat wetransfer.log | grep https)"
         echo "url=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
-
-    - name: Upload firmware to cowtransfer
-      id: cowtransfer
-      if: steps.firmware.outputs.status == 'success' && !cancelled()
-      run: |
-        curl -fsSL git.io/file-transfer | sh
-        ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
-        echo "::notice file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
-        echo "url=$(cat cowtransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
         
     - name: Telegram notification
       if: steps.firmware.outputs.status == 'success' && !cancelled()
       run: |
         MSG="
-        Firmware: Newifi3 - OpenWRT-22.03
+        Firmware: Newifi3 - Snapshot
         Compiled on: ${{ env.FILE_DATE }}
         Download: ${{ steps.wetransfer.outputs.url }}
         Mirror: ${{ steps.cowtransfer.outputs.url }}
