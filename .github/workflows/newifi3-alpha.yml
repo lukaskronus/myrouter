@@ -8,7 +8,7 @@ on:
 
 env:
   REPO_URL: https://github.com/openwrt/openwrt.git
-  REPO_BRANCH: v22.03.3
+  REPO_BRANCH: openwrt-22.03
   CONFIG_FILE: config/newifi3-openwrt-alpha.config
   TZ: UTC
 
