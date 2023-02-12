@@ -1,4 +1,4 @@
-name: Newifi3 - OpenWRT-22.03
+name: Newifi3 - Stable
 
 on:
   schedule:
@@ -10,7 +10,7 @@ on:
 
 env:
   REPO_URL: https://github.com/openwrt/openwrt.git
-  REPO_BRANCH: openwrt-22.03
+  REPO_BRANCH: v22.03.3
   CONFIG_FILE: config/newifi3-openwrt-22.03.config
   TZ: UTC
 
@@ -98,7 +98,7 @@ jobs:
       if: steps.firmware.outputs.status == 'success' && !cancelled()
       run: |
         MSG="
-        Firmware: Newifi3 - OpenWRT-22.03
+        Firmware: Newifi3 - OpenWRT-22.03 - Stable
         Compiled on: ${{ env.FILE_DATE }}
         Download: ${{ steps.wetransfer.outputs.url }}
         "
