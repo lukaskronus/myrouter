@@ -45,7 +45,7 @@ jobs:
         git clone https://github.com/Azexios/openwrt-r3p-mtk.git
         rsync -av ./openwrt-r3p-mtk/target/ ./target && rsync -av --delete ./openwrt-r3p-mtk/package/mt/ ./package/mt
         git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git package/luci-app-dnsproxy
-        git clone https://github.com/yichya/openwrt-xray.git -b v1.7.5 package/openwrt-xray
+        git clone https://github.com/yichya/openwrt-xray.git -b v1.8.0 package/openwrt-xray
         git clone https://github.com/bi7prk/luci-app-xray.git package/luci-app-xray -b luci2
         ./scripts/feeds update -a && ./scripts/feeds install -a
         git clone https://github.com/onemarcfifty/luci-proto-batman-adv.git feeds/luci/protocols/luci-proto-batman-adv
