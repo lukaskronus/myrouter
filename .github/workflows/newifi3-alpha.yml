@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 env:
-  REPO_URL: https://github.com/immortalwrt/immortalwrt.git
-  REPO_BRANCH: v21.02.4
+  REPO_URL: https://github.com/openwrt/openwrt.git
+  REPO_BRANCH: v22.03.3
   CONFIG_FILE: config/newifi3-alpha.config
   TZ: UTC
 
@@ -73,6 +73,7 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
     
     - name: Organize files
+      id: organized
       if: steps.firmware.outputs.status == 'success' && !cancelled()
       run: |
         cd openwrt/bin/targets/*/*
@@ -81,14 +82,14 @@ jobs:
     
     - name: Upload firmware directory
       uses: actions/upload-artifact@main
-      if: steps.firmware.outputs.status == 'success' && !cancelled()
+      if: steps.organized.outputs.status == 'success' && !cancelled()
       with:
         name: OpenWrt_firmware_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE }}
         
     - name: Upload firmware to WeTransfer
       id: wetransfer
-      if: steps.firmware.outputs.status == 'success' && !cancelled()
+      if: steps.organized.outputs.status == 'success' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
@@ -96,7 +97,7 @@ jobs:
         echo "url=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
         
     - name: Telegram notification
-      if: steps.firmware.outputs.status == 'success' && !cancelled()
+      if: steps.organized.outputs.status == 'success' && !cancelled()
       run: |
         MSG="
         Firmware: Newifi3 - Alpha Build
