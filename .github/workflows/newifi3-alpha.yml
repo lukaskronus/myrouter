@@ -3,7 +3,7 @@ name: Newifi3 - Alpha Build
 on:
   push:
     paths:
-      - 'config/newifi3-openwrt-alpha.config'
+      - 'config/newifi3-alpha.config'
   workflow_dispatch:
 
 env:
