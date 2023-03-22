@@ -73,7 +73,6 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
     
     - name: Organize files
-      id: organized
       if: steps.firmware.outputs.status == 'success' && !cancelled()
       run: |
         cd openwrt/bin/targets/*/*
@@ -82,14 +81,14 @@ jobs:
     
     - name: Upload firmware directory
       uses: actions/upload-artifact@main
-      if: steps.organized.outputs.status == 'success' && !cancelled()
+      if: steps.firmware.outputs.status == 'success' && !cancelled()
       with:
         name: OpenWrt_firmware_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE }}
         
     - name: Upload firmware to WeTransfer
       id: wetransfer
-      if: steps.organized.outputs.status == 'success' && !cancelled()
+      if: steps.firmware.outputs.status == 'success' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
@@ -97,7 +96,7 @@ jobs:
         echo "url=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
         
     - name: Telegram notification
-      if: steps.organized.outputs.status == 'success' && !cancelled()
+      if: steps.firmware.outputs.status == 'success' && !cancelled()
       run: |
         MSG="
         Firmware: Newifi3 - Alpha Build
