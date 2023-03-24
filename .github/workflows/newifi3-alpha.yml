@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 env:
-  REPO_URL: https://github.com/openwrt/openwrt.git
-  REPO_BRANCH: v22.03.3
+  REPO_URL: https://github.com/lukaskronus/immortalwrt-mtk-driver.git
+  REPO_BRANCH: master
   CONFIG_FILE: config/newifi3-alpha.config
   TZ: UTC
 
@@ -40,11 +40,9 @@ jobs:
     - name: Preparation
       working-directory: ./openwrt
       run: |
-        git clone https://github.com/Azexios/openwrt-r3p-mtk.git -b 21.02.3
-        rsync -av ./openwrt-r3p-mtk/target/ ./target && rsync -av --delete ./openwrt-r3p-mtk/package/mt/ ./package/mt
         git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git package/luci-app-dnsproxy
-        git clone https://github.com/yichya/openwrt-xray.git package/openwrt-xray
-        git clone https://github.com/bi7prk/luci-app-xray.git package/luci-app-xray -b luci2
+        git clone https://github.com/kuoruan/openwrt-v2ray.git package/v2ray-core
+        git clone https://github.com/kuoruan/luci-app-v2ray.git package/luci-app-v2ray -b luci2
         ./scripts/feeds update -a && ./scripts/feeds install -a
         git clone https://github.com/onemarcfifty/luci-proto-batman-adv.git feeds/luci/protocols/luci-proto-batman-adv
         ./scripts/feeds update -a && ./scripts/feeds install -a
@@ -74,21 +72,23 @@ jobs:
     
     - name: Organize files
       if: steps.firmware.outputs.status == 'success' && !cancelled()
+      id: organize
       run: |
         cd openwrt/bin/targets/*/*
         rm -rf packages
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        echo "status=success" >> $GITHUB_OUTPUT
     
     - name: Upload firmware directory
       uses: actions/upload-artifact@main
-      if: steps.firmware.outputs.status == 'success' && !cancelled()
+      if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
         name: OpenWrt_firmware_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE }}
         
     - name: Upload firmware to WeTransfer
       id: wetransfer
-      if: steps.firmware.outputs.status == 'success' && !cancelled()
+      if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
@@ -96,7 +96,7 @@ jobs:
         echo "url=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
         
     - name: Telegram notification
-      if: steps.firmware.outputs.status == 'success' && !cancelled()
+      if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         MSG="
         Firmware: Newifi3 - Alpha Build
