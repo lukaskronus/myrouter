@@ -43,11 +43,7 @@ jobs:
         df -hT $PWD
         git clone $REPO_URL -b $REPO_BRANCH immortalwrt
         ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
-
-    - name: Load custom packages
-      working-directory: /workdir
-      run: |
-        
+       
     - name: Load custom feeds
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF immortalwrt/feeds.conf.default
@@ -57,7 +53,9 @@ jobs:
 
     - name: Update and Install feeds
       working-directory: /workdir
-      run: ./scripts/feeds update -a & ./scripts/feeds install -a
+      run: |
+        cd immortalwrt/
+        ./scripts/feeds update -a && ./scripts/feeds install -a
 
     - name: Load custom configuration
       run: |
