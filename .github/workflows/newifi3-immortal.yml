@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 env:
-  REPO_URL: https://github.com/lukaskronus/immortalwrt-mtk-driver
-  REPO_BRANCH: master
+  REPO_URL: https://github.com/immortalwrt/immortalwrt.git
+  REPO_BRANCH: v21.02.3
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: config/newifi3-custom.config
   DIY_P1_SH: diy/newifi_d2/diy-before-feeds.sh
