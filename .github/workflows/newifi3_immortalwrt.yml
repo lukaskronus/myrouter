@@ -3,7 +3,7 @@ name: Build Newifi3 D2 firmware
 on:
   push:
     paths:
-      - 'config/newifi3.config'
+      - 'config/newifi3-immortalwrt.config'
   workflow_dispatch:
 
 env:
