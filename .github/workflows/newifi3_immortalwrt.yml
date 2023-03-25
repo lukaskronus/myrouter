@@ -1,15 +1,15 @@
-name: Build Newifi3 D2 firmware
+name: Build Newifi3 D2
 
 on:
   push:
     paths:
-      - 'config/newifi3-immortalwrt.config'
+      - 'config/newifi3.config'
   workflow_dispatch:
 
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt.git
   REPO_BRANCH: v21.02.4
-  CONFIG_FILE: config/newifi3-immortalwrt.config
+  CONFIG_FILE: config/newifi3.config
   DIY_PACKAGES: diy/packages.sh
   DIY_PERSONAL: diy/personal.sh
   DIY_DEVICE: diy/newifi.sh
