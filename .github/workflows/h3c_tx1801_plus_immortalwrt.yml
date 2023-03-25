@@ -1,19 +1,22 @@
-name: Newifi D2 - ImmortalWRT
+name: Build H3 TX1801 Plus
 
 on:
   push:
     paths:
-      - 'config/newifi3-custom.config'
+      - 'config/h3c_tx1801_plus.config'
   workflow_dispatch:
 
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt.git
   REPO_BRANCH: v21.02.4
-  CONFIG_FILE: config/newifi3-custom.config
+  CONFIG_FILE: config/h3c_tx1801_plus.config
+  DIY_PACKAGES: diy/packages.sh
+  DIY_PERSONAL: diy/personal.sh
   TZ: UTC
 
 jobs:
-  build:
+  compile:
+    name: 📶ImmortalWRT📶
     runs-on: ubuntu-20.04
 
     steps:
@@ -25,7 +28,7 @@ jobs:
         DEBIAN_FRONTEND: noninteractive
       run: |
         sudo -E apt-get -qq update
-        sudo -E apt-get -qq install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs gcc-multilib g++-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler antlr3 gperf swig
+        sudo -E apt-get -qq install -y build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs gcc-multilib g++ g++-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler antlr3 gperf swig clang python3-distutils rsync file wget
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
         sudo timedatectl set-timezone "$TZ"
@@ -39,28 +42,18 @@ jobs:
         git clone $REPO_URL -b $REPO_BRANCH immortalwrt
         ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
        
-    - name: Load custom feeds
-      working-directory: ./immortalwrt
-      run: |
-        git clone --depth=1 https://github.com/NagaseKouichi/luci-app-dnsproxy.git package/luci-app-dnsproxy
-        git clone --depth=1 https://github.com/fw876/helloworld package/helloworld
-        git clone --depth=1 https://github.com/honwen/luci-app-xray.git package/luci-app-xray
-        git clone --depth=1 -b luci2 https://github.com/lukaskronus/luci-proto-batman-adv.git package/luci-proto-batman-adv
-
     - name: Update and Install feeds
       working-directory: ./immortalwrt
-      run: scripts/feeds update -a && scripts/feeds install -a
+      run: |
+        chmod +x $DIY_PACKAGES
+        $GITHUB_WORKSPACE/$DIY_PACKAGES
+        scripts/feeds update -a && scripts/feeds install -a
 
-    - name: Cleanup feeds
+    - name: Personalize firmware
       working-directory: ./immortalwrt
       run: |
-        sed -i 's/192.168.1.1/192.168.41.1/g' package/base-files/files/bin/config_generate
-        sed -i 's/ImmortalWrt/AkiKiiro/g' package/base-files/files/bin/config_generate
-        rm -rf feeds/packages/net/{chinadns-ng,dns2socks,dns2tcp,hysteria,ipt2socks,microsocks,naiveproxy,redsocks2,sagernet-core,shadowsocks-rust,shadowsocksr-libev,simple-obfs,tcping,trojan,v2ray-core,v2ray-geodata,v2ray-plugin,v2raya,xray-core,xray-plugin}
-        rm -rf feeds/packages/lang/lua-neturl
-        rm -rf feeds/luci/applications/luci-app-ssr-plus
-        rm -rf feeds/packages/lang/golang
-        svn co https://github.com/openwrt/packages/branches/openwrt-22.03/lang/golang feeds/packages/lang/golang
+        chmod +x $DIY_PERSONAL
+        $GITHUB_WORKSPACE/$DIY_PERSONAL
     
     - name: Load custom config
       run: |
@@ -68,16 +61,16 @@ jobs:
         cd immortalwrt && make defconfig
 
     - name: Download package
+      working-directory: ./immortalwrt
       run: |
-        cd immortalwrt
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
     
     - name: Compile the firmware
       id: compile
+      working-directory: ./immortalwrt
       run: |
-        cd immortalwrt
         make -j$(nproc) || make -j1 || make -j1 V=s
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
@@ -112,7 +105,7 @@ jobs:
       if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         MSG="
-        Firmware: Newifi3 - ImmortalWRT
+        Firmware: H3C Tx1801 Plus - ImmortalWRT
         Compiled on: ${{ env.FILE_DATE }}
         Download: ${{ steps.wetransfer.outputs.url }}
         "
