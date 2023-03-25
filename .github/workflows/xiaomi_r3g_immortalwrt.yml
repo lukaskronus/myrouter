@@ -43,16 +43,16 @@ jobs:
         ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
        
     - name: Update and Install feeds
-      working-directory: ./immortalwrt
       run: |
         chmod +x $DIY_PACKAGES
+        cd immortalwrt/
         $GITHUB_WORKSPACE/$DIY_PACKAGES
         scripts/feeds update -a && scripts/feeds install -a
 
     - name: Personalize firmware
-      working-directory: ./immortalwrt
       run: |
         chmod +x $DIY_PERSONAL
+        cd immortalwrt/
         $GITHUB_WORKSPACE/$DIY_PERSONAL
     
     - name: Load custom config
