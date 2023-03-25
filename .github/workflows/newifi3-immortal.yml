@@ -61,11 +61,15 @@ jobs:
         rm -rf feeds/luci/applications/luci-app-ssr-plus
         rm -rf feeds/packages/lang/golang
         svn co https://github.com/openwrt/packages/branches/openwrt-22.03/lang/golang feeds/packages/lang/golang
+    
+    - name: Load custom config
+      run: |
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE immortalwrt/.config
+        cd immortalwrt && make defconfig
 
     - name: Download package
       run: |
         cd immortalwrt
-        make defconfig
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
