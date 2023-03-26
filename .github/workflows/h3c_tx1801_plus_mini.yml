@@ -1,19 +1,15 @@
-name: Build Xiaomi R3G v1
+name: Build H3 TX1801 Plus (Mini)
 
 on:
   push:
     paths:
-      - 'config/xiaomi_r3g.config'
-  schedule:
-    - cron: '0 0 * * 6'
+      - 'config/h3c_tx1801_plus_mini.config'
   workflow_dispatch:
 
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt.git
   REPO_BRANCH: v21.02.5
-  CONFIG_FILE: config/xiaomi_r3g.config
-  DIY_PACKAGES: diy/packages.sh
-  DIY_PERSONAL: diy/personal.sh
+  CONFIG_FILE: config/h3c_tx1801_plus_mini.config
   TZ: UTC
 
 jobs:
@@ -36,6 +32,15 @@ jobs:
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
+
+    - name: Cache ImmortalWRT
+      uses: stupidloud/cachewrtbuild@main
+      with:
+        ccache: true
+        toolchain: true
+        skip: true
+        clean: false
+        prefix: ${{ github.workspace }}/openwrt
     
     - name: Clone source code
       working-directory: /workdir
@@ -46,16 +51,8 @@ jobs:
        
     - name: Update and Install feeds
       run: |
-        chmod +x $DIY_PACKAGES
         cd immortalwrt/
-        $GITHUB_WORKSPACE/$DIY_PACKAGES
         scripts/feeds update -a && scripts/feeds install -a
-
-    - name: Personalize firmware
-      run: |
-        chmod +x $DIY_PERSONAL
-        cd immortalwrt/
-        $GITHUB_WORKSPACE/$DIY_PERSONAL
     
     - name: Load custom config
       run: |
@@ -108,7 +105,7 @@ jobs:
       if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         MSG="
-        Firmware: Xiaomi R3G v1 - ImmortalWRT
+        Firmware: H3C Tx1801 Plus - Mini
         Compiled on: ${{ env.FILE_DATE }}
         Download: ${{ steps.wetransfer.outputs.url }}
         "

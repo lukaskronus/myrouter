@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'config/h3c_tx1801_plus.config'
+  schedule:
+    - cron: '0 0 * * 6'
   workflow_dispatch:
 
 env:
