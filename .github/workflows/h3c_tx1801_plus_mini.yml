@@ -40,7 +40,7 @@ jobs:
         toolchain: true
         skip: true
         clean: false
-        prefix: ${{ github.workspace }}/openwrt
+        prefix: ${{ github.workspace }}/immortalwrt
     
     - name: Clone source code
       working-directory: /workdir
