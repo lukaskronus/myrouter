@@ -8,7 +8,7 @@ on:
 
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt.git
-  REPO_BRANCH: v21.02.4
+  REPO_BRANCH: v21.02.5
   CONFIG_FILE: config/h3c_tx1801_plus.config
   DIY_PACKAGES: diy/packages.sh
   DIY_PERSONAL: diy/personal.sh
@@ -94,6 +94,7 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware to WeTransfer
+      id: wetransfer
       if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
