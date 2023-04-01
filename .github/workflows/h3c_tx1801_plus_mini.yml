@@ -97,7 +97,7 @@ jobs:
       if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
-        ./transfer gof -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee gofile.log
+        ./transfer gof -p 16 --no-progress ${FIRMWARE} 2>&1 | tee gofile.log
         echo "::notice file=gofile.io::$(cat gofile.log | grep https)"
         echo "url=$(cat gofile.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
 
@@ -106,7 +106,7 @@ jobs:
       if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
-        ./transfer trs -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee transfer.sh.log
+        ./transfer trs -p 16 --no-progress ${FIRMWARE} 2>&1 | tee transfer.sh.log
         echo "::notice file=transfer.sh::$(cat transfer.sh.log | grep https)"
         echo "url=$(cat transfer.sh.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
         
