@@ -103,16 +103,7 @@ jobs:
         rm -rf packages
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
-    
-    - name: Upload firmware to Transfer.sh
-      id: transfer
-      if: steps.organize.outputs.status == 'success' && !cancelled()
-      run: |
-        curl -sL https://git.io/file-transfer | sh
-        ./transfer trs --no-progress ${FIRMWARE} 2>&1 | tee transfer.log
-        echo "::notice file=transfer::$(cat transfer.log | grep https)"
-        echo "url=$(cat transfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
-    
+       
     #- name: Upload firmware to WeTransfer
     #  id: wetransfer
     #  if: steps.organize.outputs.status == 'success' && !cancelled()
