@@ -92,23 +92,23 @@ jobs:
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
-    - name: Upload firmware to GoFile
-      id: gofile
-      if: steps.organize.outputs.status == 'success' && !cancelled()
-      run: |
-        curl -sL https://git.io/file-transfer | sh
-        ./transfer gof --single --no-progress ${FIRMWARE} 2>&1 | tee gofile.log
-        echo "::notice file=gofile.io::$(cat gofile.log | grep https)"
-        echo "url=$(cat gofile.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+    #- name: Upload firmware to WeTransfer
+    #  id: wetransfer
+    #  if: steps.organize.outputs.status == 'success' && !cancelled()
+    #  run: |
+    #    curl -fsSL git.io/file-transfer | sh
+    #    ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
+    #    echo "::notice file=wetransfer.com::$(cat wetransfer.log | grep https)"
+    #    echo "url=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
 
     - name: Upload firmware to Transfer.sh
       id: transfer
       if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         curl -sL https://git.io/file-transfer | sh
-        ./transfer trs --no-progress ${FIRMWARE} 2>&1 | tee transfer.sh.log
-        echo "::notice file=transfer.sh::$(cat transfer.sh.log | grep https)"
-        echo "url=$(cat transfer.sh.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+        ./transfer trs --no-progress ${FIRMWARE} 2>&1 | tee transfer.log
+        echo "::notice file=transfer::$(cat transfer.log | grep https)"
+        echo "url=$(cat transfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
         
     - name: Telegram notification
       if: steps.organize.outputs.status == 'success' && !cancelled()
