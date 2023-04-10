@@ -8,6 +8,12 @@ on:
     - cron: '0 0 * * 6'
   workflow_dispatch:
 
+env:
+  CONFIG_FILE: config/newifi3.config
+  DIY_01: diy/01_resource.sh
+  DIY_02: diy/02_packages.sh
+  DIY_03: diy/03_mt7621.sh
+
 jobs:
   compile:
     name: 📶ImmortalWRT📶
@@ -35,20 +41,24 @@ jobs:
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
         sudo timedatectl set-timezone "Asia/Ho_Chi_Minh"
-        df -h
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
 
     - name: Clone source code
+      working-directory: /workdir
       run: |
-        sudo chown -R runner:runner /home/runner/work/myrouter
-        cp -r ./diy/. ./
-        /bin/bash 01_resource.sh
+        df -hT $PWD
+        chmod +x $DIY_01
+        $GITHUB_WORKSPACE/$DIY_01
+        ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
 
     - name: Prepare packages
       run: |
         cd immortalwrt
-        cp -r ../diy/. ./
-        /bin/bash 02_packages.sh
-        /bin/bash 03_mt7621.sh
+        chmod +x $DIY_02
+        chmod +x $DIY_03
+        $GITHUB_WORKSPACE/$DIY_02
+        $GITHUB_WORKSPACE/$DIY_03
        
     - name: Cache ImmortalWRT
       uses: HiGarfield/cachewrtbuild@main
@@ -60,33 +70,33 @@ jobs:
         prefix: ${{ github.workspace }}/immortalwrt
 
     - name: Load custom config
+      working-directory: ./immortalwrt
       run: |
-        cd immortalwrt
-        mv ../config/newifi3.config .config
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE immortalwrt/.config
         make defconfig
 
     - name: Download package
+      working-directory: ./immortalwrt
       run: |
-        cd immortalwrt
         make download -j48
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
     
     - name: Compile the firmware
+      working-directory: ./immortalwrt
       id: compile
       run: |
-        cd immortalwrt
         make -j$(nproc) V=m
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
-        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
-        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        echo "FILE_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload bin directory
       uses: actions/upload-artifact@main
       if: steps.compile.outputs.status == 'success' && !cancelled()
       with:
-        name: ImmortalWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: ImmortalWrt_bin_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
         path: immortalwrt/bin
 
     - name: Organize files
@@ -111,8 +121,9 @@ jobs:
       if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         MSG="
-        Firmware: Newifi3 D2 - ImmortalWRT
+        Firmware: ${{ env.DEVICE_NAME }} - ImmortalWRT
         Compiled on: ${{ env.FILE_DATE }}
-        Download: ${{ steps.wetransfer.outputs.url }}
         "
         curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_TO }}&text=${MSG}"
+
+# Download: ${{ steps.wetransfer.outputs.url }}

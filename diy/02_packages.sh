@@ -16,4 +16,3 @@ sed -i 's/ImmortalWrt/AkiKiiro/g' package/base-files/files/bin/config_generate
 # Packages
 git clone https://github.com/NagaseKouichi/luci-app-dnsproxy ./feeds/luci/applications/luci-app-dnsproxy
 git clone https://github.com/onemarcfifty/luci-proto-batman-adv ./feeds/luci/protocols/luci-proto-batman-adv
-cp -rf ../OpenWrt-Add/luci-app-irqbalance ./feeds/luci/applications/luci-app-irqbalance
