@@ -54,9 +54,9 @@ jobs:
 
     - name: Prepare packages
       run: |
-        cd immortalwrt
         chmod +x $DIY_02
         chmod +x $DIY_03
+        cd immortalwrt
         $GITHUB_WORKSPACE/$DIY_02
         $GITHUB_WORKSPACE/$DIY_03
        
