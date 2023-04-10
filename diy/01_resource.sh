@@ -1,9 +1,8 @@
 #!/bin/bash
 
 # Clone source code
-latest_release="$(curl -s https://api.github.com/repos/immortalwrt/immortalwrt/tags | grep -Eo "v21.02.+[0-9\.]" | head -n 1)"
-git clone --single-branch -b $(latest_release) https://github.com/immortalwrt/immortalwrt.git immortalwrt_release
-git clone --single-branch -b immortalwrt-21.02 https://github.com/immortalwrt/immortalwrt.git immortalwrt
+git clone --single-branch -b v21.02.5 https://github.com/immortalwrt/immortalwrt.git immortalwrt_release
+git clone --single-branch -b openwrt-21.02 https://github.com/immortalwrt/immortalwrt.git immortalwrt
 rm -f ./immortalwrt/include/version.mk
 rm -f ./immortalwrt/include/kernel.mk
 rm -f ./immortalwrt/include/kernel-5.10
