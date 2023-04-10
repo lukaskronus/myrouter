@@ -45,10 +45,10 @@ jobs:
         sudo chown $USER:$GROUPS /workdir
 
     - name: Clone source code
-      working-directory: /workdir
       run: |
         df -hT $PWD
         chmod +x $DIY_01
+        cd /workdir
         $GITHUB_WORKSPACE/$DIY_01
         ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
 
