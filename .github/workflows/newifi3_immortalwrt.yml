@@ -41,7 +41,7 @@ jobs:
         chmod +x $DIY_01
         cd /workdir
         $GITHUB_WORKSPACE/$DIY_01
-        ln -sf /workdir/immortalwrt/ $GITHUB_WORKSPACE/immortalwrt/
+        ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
     
     - name: Prepare packages
       run: |
@@ -58,7 +58,7 @@ jobs:
         toolchain: true
         skip: true
         clean: false
-        prefix: ${{ github.workspace }}/immortalwrt/
+        prefix: ${{ github.workspace }}/immortalwrt
 
     - name: Load custom config
       run: |
@@ -66,14 +66,14 @@ jobs:
         make defconfig
     
     - name: Download package
-      working-directory: ./immortalwrt/
+      working-directory: ./immortalwrt
       run: |
         make download -j48
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
     
     - name: Compile the firmware
-      working-directory: ./immortalwrt/
+      working-directory: ./immortalwrt
       id: compile
       run: |
         make -j$(nproc) || make -j1 || make -j1 V=s
