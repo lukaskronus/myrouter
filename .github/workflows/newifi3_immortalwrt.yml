@@ -34,20 +34,20 @@ jobs:
         sudo timedatectl set-timezone "Asia/Ho_Chi_Minh"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
-
+    
     - name: Clone source code
       run: |
         df -hT $PWD
         chmod +x $DIY_01
         cd /workdir
         $GITHUB_WORKSPACE/$DIY_01
-        ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
-
+        ln -sf /workdir/immortalwrt/ $GITHUB_WORKSPACE/immortalwrt/
+    
     - name: Prepare packages
       run: |
         chmod +x $DIY_02
         chmod +x $DIY_03
-        cd immortalwrt
+        cd immortalwrt/
         $GITHUB_WORKSPACE/$DIY_02
         $GITHUB_WORKSPACE/$DIY_03
        
@@ -58,23 +58,22 @@ jobs:
         toolchain: true
         skip: true
         clean: false
-        prefix: ${{ github.workspace }}/immortalwrt
+        prefix: ${{ github.workspace }}/immortalwrt/
 
     - name: Load custom config
-      working-directory: ./immortalwrt
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE immortalwrt/.config
         make defconfig
-
+    
     - name: Download package
-      working-directory: ./immortalwrt
+      working-directory: ./immortalwrt/
       run: |
-        make download -j8
+        make download -j48
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
     
     - name: Compile the firmware
-      working-directory: ./immortalwrt
+      working-directory: ./immortalwrt/
       id: compile
       run: |
         make -j$(nproc) || make -j1 || make -j1 V=s
@@ -82,7 +81,7 @@ jobs:
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=$(cat DEVICE_NAME)" >> $GITHUB_ENV
         echo "FILE_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
-
+    
     - name: Upload bin directory
       uses: actions/upload-artifact@main
       if: steps.compile.outputs.status == 'success' && !cancelled()
@@ -99,22 +98,22 @@ jobs:
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
     
-    #- name: Upload firmware to WeTransfer
-    #  id: wetransfer
-    #  if: steps.organize.outputs.status == 'success' && !cancelled()
-    #  run: |
-    #    curl -fsSL git.io/file-transfer | sh
-    #    ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
-    #    echo "::notice file=wetransfer.com::$(cat wetransfer.log | grep https)"
-    #    echo "url=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
-        
+    - name: Upload to transfer.sh
+      id: upload
+      if: steps.organize.outputs.status == 'success' && !cancelled()
+      run: |
+        curl -sL https://git.io/file-transfer | sh
+        ./transfer trs --no-progress --no-progress ${FIRMWARE} 2>&1 | tee trs.log
+        echo "::notice file=transfer.com::$(cat trs.log | grep https | grep sysupgrade)"
+        echo "url=$(cat trs.log | grep https | grep sysupgrade | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+
     - name: Telegram notification
       if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         MSG="
-        Firmware: ${{ env.DEVICE_NAME }} - ImmortalWRT
+        Device: ${{ env.DEVICE_NAME }}
+        Variation: ImmortalWRT
         Compiled on: ${{ env.FILE_DATE }}
+        Download: ${{ steps.upload.outputs.url }}
         "
         curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_TO }}&text=${MSG}"
-
-# Download: ${{ steps.wetransfer.outputs.url }}
