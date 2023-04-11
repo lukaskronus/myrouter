@@ -6,7 +6,7 @@ git clone --single-branch -b ${latest_release} https://github.com/immortalwrt/im
 git clone --single-branch -b openwrt-21.02 https://github.com/immortalwrt/immortalwrt.git immortalwrt
 rm -f ./immortalwrt/include/version.mk
 rm -f ./immortalwrt/include/kernel.mk
-rm -f ./immortalwrt/include/kernel-5.10
+rm -f ./immortalwrt/include/kernel-5.4
 rm -f ./immortalwrt/include/kernel-version.mk
 rm -f ./immortalwrt/include/toolchain-build.mk
 rm -f ./immortalwrt/include/kernel-defaults.mk

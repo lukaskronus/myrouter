@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Packages
+git clone https://github.com/NagaseKouichi/luci-app-dnsproxy ./packages/luci-app-dnsproxy
+git clone -b luci2 https://github.com/lukaskronus/luci-proto-batman-adv.git ./packages/luci-proto-batman-adv
+
 # Update feeds
 ./scripts/feeds update -a && ./scripts/feeds install -a
 # Enable irqbalance
@@ -12,7 +16,3 @@ sed -i 's/default NODEJS_ICU_SMALL/default NODEJS_ICU_NONE/g' feeds/packages/lan
 # My modifications
 sed -i 's/192.168.1.1/192.168.41.1/g' package/base-files/files/bin/config_generate
 sed -i 's/ImmortalWrt/AkiKiiro/g' package/base-files/files/bin/config_generate
-
-# Packages
-git clone https://github.com/NagaseKouichi/luci-app-dnsproxy ./feeds/luci/applications/luci-app-dnsproxy
-git clone https://github.com/onemarcfifty/luci-proto-batman-adv ./feeds/luci/protocols/luci-proto-batman-adv
