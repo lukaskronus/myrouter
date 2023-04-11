@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Packages
-git clone https://github.com/NagaseKouichi/luci-app-dnsproxy ./packages/luci-app-dnsproxy
-git clone -b luci2 https://github.com/lukaskronus/luci-proto-batman-adv.git ./packages/luci-proto-batman-adv
+git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git ./package/luci-app-dnsproxy
+git clone -b luci2 https://github.com/lukaskronus/luci-proto-batman-adv.git ./package/luci-proto-batman-adv
 
 # Update feeds
 ./scripts/feeds update -a && ./scripts/feeds install -a
