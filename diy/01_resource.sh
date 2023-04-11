@@ -15,7 +15,7 @@ rm -rf ./immortalwrt/target/linux/*
 rm -rf ./immortalwrt/package/kernel/linux/*
 cp -f ./immortalwrt_release/include/version.mk ./immortalwrt/include/version.mk
 cp -f ./immortalwrt_release/include/kernel.mk ./immortalwrt/include/kernel.mk
-cp -f ./immortalwrt_release/include/kernel-5.10 ./immortalwrt/include/kernel-5.10
+cp -f ./immortalwrt_release/include/kernel-5.4 ./immortalwrt/include/kernel-5.4
 cp -f ./immortalwrt_release/include/kernel-version.mk ./immortalwrt/include/kernel-version.mk
 cp -f ./immortalwrt_release/include/toolchain-build.mk ./immortalwrt/include/toolchain-build.mk
 cp -f ./immortalwrt_release/include/kernel-defaults.mk ./immortalwrt/include/kernel-defaults.mk
