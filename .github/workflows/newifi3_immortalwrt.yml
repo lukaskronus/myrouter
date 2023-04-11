@@ -63,7 +63,7 @@ jobs:
     - name: Load custom config
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE immortalwrt/.config
-        make defconfig
+        cd immortalwrt && make defconfig
     
     - name: Download package
       working-directory: ./immortalwrt
