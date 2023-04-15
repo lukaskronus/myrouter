@@ -25,7 +25,4 @@ cp -f ./immortalwrt_release/version.date ./immortalwrt/version.date
 cp -rf ./immortalwrt_release/target/linux/* ./immortalwrt/target/linux/
 cp -rf ./immortalwrt_release/package/kernel/linux/* ./immortalwrt/package/kernel/linux/
 
-# Clone package repos
-git clone -b master --depth 1 https://github.com/QiuSimons/OpenWrt-Add.git OpenWrt-Add
-
 exit 0
