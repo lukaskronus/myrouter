@@ -11,7 +11,6 @@ sed -i "s/enabled '0'/enabled '1'/g" feeds/packages/utils/irqbalance/files/irqba
 # Secret patches
 sed -i '/unshift/d' scripts/download.pl
 sed -i '/mirror02/d' scripts/download.pl
-echo "net.netfilter.nf_conntrack_helper = 1" >> ./package/kernel/linux/files/sysctl-nf-conntrack.conf
 sed -i 's/default NODEJS_ICU_SMALL/default NODEJS_ICU_NONE/g' feeds/packages/lang/node/Makefile
 # My modifications
 sed -i 's/192.168.1.1/192.168.41.1/g' package/base-files/files/bin/config_generate
