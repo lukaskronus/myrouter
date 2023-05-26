@@ -1,15 +1,15 @@
-name: Build MT7621 routers
+name: Build Newifi3 Test
 
 on:
   push:
     paths:
-      - 'config/mt7621.config'
+      - 'config/newifid2.config'
   schedule:
     - cron: '0 0 * * 6'
   workflow_dispatch:
 
 env:
-  CONFIG_FILE: config/mt7621.config
+  CONFIG_FILE: config/newifid2.config
   DIY_01: diy/01_resource.sh
   DIY_02: diy/02_packages.sh
   DIY_03: diy/03_mt7621.sh
