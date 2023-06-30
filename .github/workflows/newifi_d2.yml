@@ -1,4 +1,4 @@
-name: Build Newifi3 Test
+name: Build Newifi3 Latest
 
 on:
   push:
@@ -10,9 +10,9 @@ on:
 
 env:
   CONFIG_FILE: config/newifid2.config
-  DIY_01: diy/01_resource.sh
+  DIY_01: diy/04_latest.sh
   DIY_02: diy/02_packages.sh
-  DIY_03: diy/03_mt7621.sh
+  DIY_03: diy/05_latest_vermagic.sh
 
 jobs:
   compile:
