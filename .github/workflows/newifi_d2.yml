@@ -99,3 +99,12 @@ jobs:
       with:
         name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE }}
+    
+    - name: Upload to 3rd-party firmware
+      if: steps.compile.outputs.status == 'success' && !cancelled()
+      run: |
+        zip -r newifid2.zip $FIRMWARE
+        curl -sL https://git.io/file-transfer | sh
+        ./transfer gg --no-progress ./newifid2.zip 2>&1 | tee gg.log
+        echo "::notice file=download.gg::$(cat gg.log | grep https)"
+        echo "url=$(cat gg.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
