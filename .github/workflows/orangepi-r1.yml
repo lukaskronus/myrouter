@@ -33,7 +33,7 @@ jobs:
     - name: Clone source code
       run: |
         df -hT $PWD
-        git clone --depth 1 -b v21.02.7 https://git.openwrt.org/openwrt/openwrt.git
+        git clone --depth 1 -b v21.02.7 https://git.openwrt.org/openwrt/openwrt.git openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     
     - name: Apply patch
@@ -42,7 +42,16 @@ jobs:
         cd openwrt/
         patch -p1 < ./patches/All_openwrt-21.02.patch
         sed -i '$a src-git opicyberwrt https://github.com/melsem/opi-zero-cyberwrt.git' feeds.conf.default
-
+    
+    - name: Cache OpenWRT
+      uses: HiGarfield/cachewrtbuild@main
+      with:
+        ccache: true
+        toolchain: true
+        skip: true
+        clean: false
+        prefix: ${{ github.workspace }}/openwrt_opr1
+    
     - name: Load custom config
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
