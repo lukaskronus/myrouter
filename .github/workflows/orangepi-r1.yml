@@ -50,7 +50,7 @@ jobs:
         toolchain: true
         skip: true
         clean: false
-        prefix: ${{ github.workspace }}/openwrt_opr1
+        prefix: ${{ github.workspace }}/openwrt
     
     - name: Load custom config
       run: |
@@ -93,7 +93,7 @@ jobs:
     - name: Upload to 3rd-party firmware
       if: steps.compile.outputs.status == 'success' && !cancelled()
       run: |
-        zip -r orangepir1.zip $FIRMWARE
+        zip -rj orangepir1.zip $FIRMWARE
         curl -sL https://git.io/file-transfer | sh
         ./transfer gg --no-progress ./orangepir1.zip 2>&1 | tee gg.log
         echo "::notice file=download.gg::$(cat gg.log | grep https)"
