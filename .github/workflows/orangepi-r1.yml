@@ -11,7 +11,7 @@ env:
 
 jobs:
   compile:
-    name: 📶ImmortalWRT📶
+    name: 📶OrangePi R1📶
     runs-on: ubuntu-20.04
 
     steps:
@@ -36,11 +36,12 @@ jobs:
         git clone --depth 1 -b v21.02.7 https://git.openwrt.org/openwrt/openwrt.git
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     
-    - name: Prepare packages
+    - name: Apply patch
       run: |
         cp -r ./diy/orangepi-r1/ ./openwrt/patches/
         cd openwrt/
         patch -p1 < ./patches/All_openwrt-21.02.patch
+        sed -i '$a src-git opicyberwrt https://github.com/melsem/opi-zero-cyberwrt.git' feeds.conf.default
 
     - name: Load custom config
       run: |
