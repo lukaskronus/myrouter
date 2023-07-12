@@ -36,12 +36,13 @@ jobs:
         git clone --depth 1 -b v21.02.7 https://git.openwrt.org/openwrt/openwrt.git openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     
-    - name: Apply patch
+    - name: Apply patch and packages
       run: |
         cp -r ./diy/orangepi-r1/ ./openwrt/patches/
         cd openwrt/
         patch -p1 < ./patches/All_openwrt-21.02.patch
         sed -i '$a src-git opicyberwrt https://github.com/melsem/opi-zero-cyberwrt.git' feeds.conf.default
+        scripts/feeds update -a && scripts/feeds install -a
     
     - name: Cache OpenWRT
       uses: HiGarfield/cachewrtbuild@main
