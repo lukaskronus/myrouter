@@ -8,7 +8,6 @@ on:
 
 env:
   CONFIG_FILE: config/orangepi-r1.config
-  DIY_01: diy/orangepi-r1/All_openwrt-21.02.patch
 
 jobs:
   compile:
@@ -39,9 +38,9 @@ jobs:
     
     - name: Prepare packages
       run: |
-        chmod +x $DIY_01
+        cp -r ./diy/orangepi-r1/ ./openwrt/patches/
         cd openwrt/
-        patch -p1 < $GITHUB_WORKSPACE/$DIY_01
+        patch -p1 < ./patches/All_openwrt-21.02.patch
 
     - name: Load custom config
       run: |
