@@ -7,6 +7,8 @@ on:
   workflow_dispatch:
 
 env:
+  REPO_URL: https://github.com/immortalwrt/immortalwrt
+  REPO_BRANCH: v21.02.6
   CONFIG_FILE: config/orangepi-r1.config
 
 jobs:
@@ -32,7 +34,7 @@ jobs:
     - name: Clone source code
       run: |
         df -hT $PWD
-        git clone --depth 1 -b v21.02.7 https://git.openwrt.org/openwrt/openwrt.git openwrt
+        git clone $REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     
     - name: Apply patch and packages
