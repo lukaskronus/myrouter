@@ -41,7 +41,7 @@ jobs:
     - name: Apply patches
       working-directory: ./openwrt
       run: |
-        patch -p1 < "${GITHUB_WORKSPACE}/diy/orangepi-r1/oprt1-openwrt.patch"
+        patch -p1 < "${GITHUB_WORKSPACE}/diy/orangepi-r1/opr1-openwrt.patch"
         sed -i '$a src-git opicyberwrt https://github.com/lukaskronus/opi-r1-cyberwrt' feeds.conf.default
         scripts/feeds update -a && scripts/feeds install -a
     
