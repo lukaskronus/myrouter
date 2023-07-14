@@ -2330,10 +2330,10 @@
  	uci -q batch <<-EOF
  		delete system.@system[0]
  		add system system
--		set system.@system[-1].hostname='OpenWrt'
+-		set system.@system[-1].hostname='ImmortalWrt'
 -		set system.@system[-1].timezone='UTC'
 +		set system.@system[-1].hostname=${boardname}
-+		set system.@system[-1].timezone='EET-2EEST,M3.5.0/3,M10.5.0/4'
++		set system.@system[-1].timezone='ICT-7'
 +		set system.@system[-1].zonename='Asia/Ho_Chi_Minh'
 +		set system.@system[-1].log_proto='udp'
 +		set system.@system[-1].conloglevel='8'
