@@ -38,11 +38,10 @@ jobs:
         git clone $REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     
-    - name: Apply patch and packages
+    - name: Apply patches
+      working-directory: ./openwrt
       run: |
-        cp -r ./diy/orangepi-r1/ ./openwrt/patches
-        cd openwrt
-        patch -p1 --ignore-whitespace < ./patches/opr1-openwrt.patch
+        patch -p1 < "${GITHUB_WORKSPACE}/diy/orangepi-r1/oprt1-openwrt.patch"
         sed -i '$a src-git opicyberwrt https://github.com/lukaskronus/opi-r1-cyberwrt' feeds.conf.default
         scripts/feeds update -a && scripts/feeds install -a
     
