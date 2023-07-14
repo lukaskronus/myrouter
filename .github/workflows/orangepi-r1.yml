@@ -41,8 +41,6 @@ jobs:
       run: |
         cp ./diy/orangepi-r1/*.patch ./openwrt
         cd openwrt
-        patch -p1 < ./001-add_REL-ABS-devices.patch_openwrt-21.02.patch
-        patch -p1 < ./001_libv4l_openwrt-21.02.patch
         patch -p1 --ignore-whitespace < ./All_openwrt-21.02.patch
         sed -i '$a src-git opicyberwrt https://github.com/lukaskronus/opi-r1-cyberwrt' feeds.conf.default
         scripts/feeds update -a && scripts/feeds install -a
