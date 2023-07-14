@@ -96,6 +96,6 @@ jobs:
       run: |
         zip -rj orangepir1.zip $FIRMWARE
         curl -sL https://git.io/file-transfer | sh
-        ./transfer gg --no-progress ./orangepir1.zip 2>&1 | tee gg.log
-        echo "::notice file=download.gg::$(cat gg.log | grep https)"
-        echo "url=$(cat gg.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+        ./transfer trs --no-progress ./orangepir1.zip 2>&1 | tee trs.log
+        echo "::notice file=transfer.sh::$(cat trs.log | grep https)"
+        echo "url=$(cat trs.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
