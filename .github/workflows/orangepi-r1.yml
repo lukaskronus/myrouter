@@ -9,7 +9,7 @@ on:
 env:
   #REPO_URL: https://github.com/immortalwrt/immortalwrt
   REPO_URL: https://github.com/openwrt/openwrt
-  REPO_BRANCH: v21.02.6
+  REPO_BRANCH: v21.02.7
   CONFIG_FILE: config/orangepi-r1.config
 
 jobs:
@@ -40,9 +40,9 @@ jobs:
     
     - name: Apply patch and packages
       run: |
-        cp ./diy/orangepi-r1/*.patch ./openwrt
+        cp ./diy/orangepi-r1/opr1-*.patch ./openwrt
         cd openwrt
-        patch -p1 --ignore-whitespace < ./All_openwrt-21.02.patch
+        patch -p1 --ignore-whitespace < ./opr1-openwrt.patch
         sed -i '$a src-git opicyberwrt https://github.com/lukaskronus/opi-r1-cyberwrt' feeds.conf.default
         scripts/feeds update -a && scripts/feeds install -a
     
