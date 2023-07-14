@@ -39,9 +39,9 @@ jobs:
     
     - name: Apply patch and packages
       run: |
-        cp -r ./diy/orangepi-r1/ ./openwrt/patches/
+        cp -r ./diy/orangepi-r1/ ./openwrt/
         cd openwrt/
-        patch -p1 < ./patches/All_openwrt-21.02.patch
+        patch -p1 < ./All_openwrt-21.02.patch
         sed -i '$a src-git opicyberwrt https://github.com/lukaskronus/opi-r1-cyberwrt' feeds.conf.default
         scripts/feeds update -a && scripts/feeds install -a
     
