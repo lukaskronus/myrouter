@@ -1,6 +1,6 @@
---- a/target/linux/sunxi/config-5.4 2021-04-19 22:10:14.000000000 +0300
-+++ b/target/linux/sunxi/config-5.4 2021-05-21 12:13:05.378889259 +0300
-@@ -90,6 +90,7 @@
+--- a/target/linux/sunxi/config-5.4
++++ b/target/linux/sunxi/config-5.4
+@@ -92,6 +92,7 @@
  CONFIG_CLK_SUNXI_PRCM_SUN6I=y
  CONFIG_CLK_SUNXI_PRCM_SUN8I=y
  CONFIG_CLK_SUNXI_PRCM_SUN9I=y
@@ -8,7 +8,7 @@
  CONFIG_CLONE_BACKWARDS=y
  CONFIG_COMMON_CLK=y
  CONFIG_CONFIGFS_FS=y
-@@ -133,6 +134,7 @@
+@@ -136,6 +137,7 @@
  CONFIG_CRYPTO_CRC32=y
  CONFIG_CRYPTO_CRC32C=y
  CONFIG_CRYPTO_CRCT10DIF=y
@@ -16,7 +16,7 @@
  CONFIG_CRYPTO_DES=y
  CONFIG_CRYPTO_DEV_SUN4I_SS=y
  CONFIG_CRYPTO_DEV_SUN4I_SS_PRNG=y
-@@ -303,6 +305,7 @@
+@@ -313,6 +315,7 @@
  CONFIG_INITRAMFS_SOURCE=""
  CONFIG_INPUT=y
  CONFIG_INPUT_AXP20X_PEK=y
@@ -24,7 +24,7 @@
  CONFIG_INPUT_KEYBOARD=y
  CONFIG_INPUT_MOUSEDEV=y
  CONFIG_INPUT_MOUSEDEV_PSAUX=y
-@@ -328,6 +331,7 @@
+@@ -348,6 +351,7 @@
  CONFIG_LCD_PLATFORM=y
  CONFIG_LEDS_GPIO=y
  CONFIG_LIBFDT=y
@@ -32,7 +32,7 @@
  CONFIG_LOCK_DEBUGGING_SUPPORT=y
  CONFIG_LOCK_SPIN_ON_OWNER=y
  CONFIG_LOGO=y
-@@ -443,6 +447,10 @@
+@@ -466,6 +470,10 @@
  CONFIG_RATIONAL=y
  CONFIG_RCU_NEED_SEGCBLIST=y
  CONFIG_RCU_STALL_COMMON=y
@@ -43,7 +43,7 @@
  CONFIG_REALTEK_PHY=y
  CONFIG_REFCOUNT_FULL=y
  CONFIG_REGMAP=y
-@@ -488,10 +496,11 @@
+@@ -511,10 +519,11 @@
  CONFIG_SND_SIMPLE_CARD_UTILS=y
  CONFIG_SND_SOC=y
  CONFIG_SND_SOC_I2C_AND_SPI=y
@@ -59,7 +59,7 @@
  CONFIG_SOUND=y
  CONFIG_SOUND_OSS_CORE=y
  CONFIG_SPARSE_IRQ=y
-@@ -537,11 +546,19 @@
+@@ -561,11 +580,19 @@
  CONFIG_SYS_SUPPORTS_HUGETLBFS=y
  CONFIG_TASKS_RCU=y
  CONFIG_THERMAL=y
@@ -80,7 +80,7 @@
  CONFIG_TICK_CPU_ACCOUNTING=y
  CONFIG_TIMER_OF=y
  CONFIG_TIMER_PROBE=y
-@@ -553,6 +570,7 @@
+@@ -578,6 +595,7 @@
  CONFIG_UNCOMPRESS_INCLUDE="debug/uncompress.h"
  CONFIG_UNINLINE_SPIN_UNLOCK=y
  CONFIG_USB=y
@@ -88,14 +88,14 @@
  CONFIG_USB_ANNOUNCE_NEW_DEVICES=y
  CONFIG_USB_COMMON=y
  CONFIG_USB_DWC2=y
---- a/target/linux/sunxi/modules.mk	2021-04-19 22:10:14.000000000 +0300
-+++ b/target/linux/sunxi/modules.mk	2021-05-08 21:04:39.775977117 +0300
+--- a/target/linux/sunxi/modules.mk
++++ b/target/linux/sunxi/modules.mk
 @@ -23,15 +23,58 @@
  define KernelPackage/sunxi-ir
      SUBMENU:=$(OTHER_MENU)
      TITLE:=Sunxi SoC built-in IR support (A20)
--    DEPENDS:=@TARGET_sunxi +kmod-input-core
-+    DEPENDS:=@TARGET_sunxi +kmod-input-core +v4l-utils +triggerhappy
+-    DEPENDS:=@TARGET_sunxi +kmod-multimedia-input
++    DEPENDS:=@TARGET_sunxi +kmod-multimedia-input +v4l-utils +triggerhappy
      $(call AddDepends/rtc)
      KCONFIG:= \
  	CONFIG_MEDIA_SUPPORT=y \
@@ -286,9 +286,9 @@
 +endef
 +
 +$(eval $(call KernelPackage,thermal-generic-adc))
---- a/target/linux/sunxi/image/cortexa7.mk	2021-04-19 22:10:14.000000000 +0300
-+++ b/target/linux/sunxi/image/cortexa7.mk	2021-05-21 12:08:54.832003099 +0300
-@@ -197,7 +197,8 @@
+--- a/target/linux/sunxi/image/cortexa7.mk
++++ b/target/linux/sunxi/image/cortexa7.mk
+@@ -207,7 +207,8 @@
  define Device/xunlong_orangepi-r1
    DEVICE_VENDOR := Xunlong
    DEVICE_MODEL := Orange Pi R1
@@ -298,177 +298,8 @@
    SOC := sun8i-h2-plus
  endef
  TARGET_DEVICES += xunlong_orangepi-r1
-@@ -205,11 +206,21 @@
- define Device/xunlong_orangepi-zero
-   DEVICE_VENDOR := Xunlong
-   DEVICE_MODEL := Orange Pi Zero
--  DEVICE_PACKAGES:=kmod-rtc-sunxi
-+  DEVICE_PACKAGES:=kmod-rtc-sunxi kmod-xradio \
-+	boot-config
-   SOC := sun8i-h2-plus
- endef
- TARGET_DEVICES += xunlong_orangepi-zero
- 
-+define Device/xunlong_orangepi-zero-lts
-+  DEVICE_VENDOR := Xunlong
-+  DEVICE_MODEL := Orange Pi Zero Lts
-+  DEVICE_PACKAGES:=kmod-rtc-sunxi kmod-xradio \
-+	boot-config
-+  SOC := sun8i-h2-plus
-+endef
-+TARGET_DEVICES += xunlong_orangepi-zero-lts
-+
- define Device/xunlong_orangepi-2
-   DEVICE_VENDOR := Xunlong
-   DEVICE_MODEL := Orange Pi 2
---- a/target/linux/sunxi/base-files/etc/rc.local	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/base-files/etc/rc.local	2021-05-08 21:04:39.775977117 +0300
-@@ -0,0 +1,7 @@
-+# Put your custom commands here that should be executed once
-+# the system init finished. By default this file does nothing.
-+
-+amixer -c 0 -q set "Line Out" 80%+ unmute &
-+amixer -c 0 -q set "DAC" 100%+ unmute &
-+
-+exit 0
---- a/target/linux/sunxi/patches-5.4/202-add0-pinctrl_wifi-xr819-opi-zero.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/202-add0-pinctrl_wifi-xr819-opi-zero.patch	2021-05-08 21:04:39.779977025 +0300
-@@ -0,0 +1,31 @@
-+--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-+@@ -49,6 +49,7 @@
-+ 
-+ #include <dt-bindings/gpio/gpio.h>
-+ #include <dt-bindings/input/input.h>
-++#include <dt-bindings/pinctrl/sun4i-a10.h>
-+ 
-+ / {
-+ 	model = "Xunlong Orange Pi Zero";
-+@@ -143,7 +166,8 @@
-+ 	mmc-pwrseq = <&wifi_pwrseq>;
-+ 	bus-width = <4>;
-+ 	non-removable;
-+-	status = "okay";
-++	keep-power-in-suspend;
-++	status = "disabled";
-+ 
-+ 	/*
-+ 	 * Explicitly define the sdio device, so that we can add an ethernet
-+@@ -151,6 +170,10 @@
-+ 	 */
-+ 	xr819: sdio_wifi@1 {
-+ 		reg = <1>;
-++		compatible = "xradio,xr819";
-++		interrupt-parent = <&pio>;
-++		interrupts = <6 10 IRQ_TYPE_EDGE_RISING>;
-++		interrupt-names = "host-wake";
-+ 	};
-+ };
-+ 
---- a/target/linux/sunxi/patches-5.4/203-add-enable-soc_audio-routing-opi-zero.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/203-add-enable-soc_audio-routing-opi-zero.patch	2021-05-08 21:04:39.779977025 +0300
-@@ -0,0 +1,14 @@
-+--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-+@@ -167,6 +190,11 @@
-+ &ohci1 {
-+ 	status = "okay";
-+ };
-++
-++&codec { /* add audio-routing */
-++	allwinner,audio-routing = "Line Out", "LINEOUT", 
-++				"MIC1", "Mic", "Mic", "MBIAS";
-++};
-+ 
-+ &spi0 {
-+ 	/* Disable SPI NOR by default: it optional on Orange Pi Zero boards */
---- a/target/linux/sunxi/patches-5.4/204-add-IR-pinctrl-opi-zero.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/204-add-IR-pinctrl-opi-zero.patch	2021-05-08 21:04:39.779977025 +0300
-@@ -0,0 +1,15 @@
-+--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-+@@ -172,6 +200,12 @@
-+ 	allwinner,audio-routing = "Line Out", "LINEOUT", 
-+ 				"MIC1", "Mic", "Mic", "MBIAS";
-+ };
-++
-++&ir {
-++	pinctrl-names = "default";
-++	pinctrl-0 = <&r_ir_rx_pin>;
-++	status = "disabled";
-++};
-+ 
-+ &spi0 {
-+ 	/* Disable SPI NOR by default: it optional on Orange Pi Zero boards */
---- a/target/linux/sunxi/patches-5.4/205-add-w1-gpio_pinctrl-opi-zero.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/205-add-w1-gpio_pinctrl-opi-zero.patch	2021-05-08 21:04:39.779977025 +0300
-@@ -0,0 +1,39 @@
-+--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-+@@ -80,6 +90,18 @@
-+ 			gpios = <&pio 0 17 GPIO_ACTIVE_HIGH>;
-+ 		};
-+ 	};
-++
-++	w1: w1 {
-++		compatible = "w1-gpio";
-++		/*
-++		* PWM1/PA10 pin on Orange Pi Zero gpio-10
-++		* (0 this is A port, 10 this is gpio-10. for PD14 use  <&pio 3 14 GPIO_ACTIVE_LOW>)
-++		*/
-++		gpios = <&pio 0 10 (GPIO_ACTIVE_LOW|GPIO_OPEN_DRAIN)>;
-++		pinctrl-names = "default";
-++		pinctrl-0 = <&w1_pins>;
-++		status = "disabled";
-++	};
-+ 
-+ 	reg_vcc_wifi: reg_vcc_wifi {
-+ 		compatible = "regulator-fixed";
-+@@ -178,6 +200,17 @@
-+ 	pinctrl-0 = <&r_ir_rx_pin>;
-+ 	status = "disabled";
-+ };
-++
-++&pio {
-++	w1_pins: w1_pins {
-++		/*
-++		* PWM1/PA10 pin on Orange Pi Zero gpio-10
-++		*/
-++		pins = "PA10";
-++		function = "gpio_in";	// in (initially)
-++		pull = <0x00>;		// off
-++	};
-++};
-+ 
-+ &spi0 {
-+ 	/* Disable SPI NOR by default: it optional on Orange Pi Zero boards */
---- a/target/linux/sunxi/patches-5.4/206-add-PA5-pwm_pin-opi-zero.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/206-add-PA5-pwm_pin-opi-zero.patch	2021-05-08 21:04:39.779977025 +0300
-@@ -0,0 +1,22 @@
-+--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-+@@ -200,7 +250,19 @@
-+ 		function = "gpio_in";	// in (initially)
-+ 		pull = <0x00>;		// off
-+ 	};
-++
-++	pwm0_pin: pwm0 {
-++		pins = "PA5";
-++		function = "pwm0";
-++		drive = <SUN4I_PINCTRL_10_MA>;
-++		pull = <SUN4I_PINCTRL_NO_PULL>;
-++	};
-+ };
-++
-++&pwm {
-++	pinctrl-names = "default";
-++	pinctrl-0 = <&pwm0_pin>;
-++};
-+ 
-+ &spi0 {
-+ 	/* Disable SPI NOR by default: it optional on Orange Pi Zero boards */
---- a/target/linux/sunxi/patches-5.4/207-add1-ths-sun8i-h3_sunxi-h3-h5.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/207-add1-ths-sun8i-h3_sunxi-h3-h5.patch	2021-05-08 21:04:39.779977025 +0300
+--- a/target/linux/sunxi/patches-5.4/207-add1-ths-sun8i-h3_sunxi-h3-h5.patch
++++ b/target/linux/sunxi/patches-5.4/207-add1-ths-sun8i-h3_sunxi-h3-h5.patch
 @@ -0,0 +1,85 @@
 +--- a/arch/arm/boot/dts/sunxi-h3-h5.dtsi	2020-02-24 09:34:54.000000000 +0200
 ++++ b/arch/arm/boot/dts/sunxi-h3-h5.dtsi	2020-03-07 23:29:05.966849280 +0200
@@ -555,8 +386,8 @@
 + 			#cooling-cells = <2>;
 + 		};
 + 
---- a/target/linux/sunxi/patches-5.4/207-add3-sunxi-ths_linux.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/207-add3-sunxi-ths_linux.patch	2021-05-08 21:04:39.779977025 +0300
+--- a/target/linux/sunxi/patches-5.4/207-add3-sunxi-ths_linux.patch
++++ b/target/linux/sunxi/patches-5.4/207-add3-sunxi-ths_linux.patch
 @@ -0,0 +1,822 @@
 +--- a/drivers/thermal/Kconfig
 ++++ b/drivers/thermal/Kconfig
@@ -1380,8 +1211,8 @@
 ++MODULE_AUTHOR("Ondřej Jirman <megous@megous.com>");
 ++MODULE_DESCRIPTION("Thermal sensor driver for Allwinner SUN8I SoCs");
 ++MODULE_LICENSE("GPL v2");
---- a/target/linux/sunxi/patches-5.4/207-add4-sunxi-ths_gpadc_linux.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/207-add4-sunxi-ths_gpadc_linux.patch	2021-05-08 21:04:39.779977025 +0300
+--- a/target/linux/sunxi/patches-5.4/207-add4-sunxi-ths_gpadc_linux.patch
++++ b/target/linux/sunxi/patches-5.4/207-add4-sunxi-ths_gpadc_linux.patch
 @@ -0,0 +1,717 @@
 +--- a/drivers/iio/adc/sun4i-gpadc-iio.c
 ++++ b/drivers/iio/adc/sun4i-gpadc-iio.c
@@ -2100,8 +1931,8 @@
 + 	return 0;
 + }
 + 
---- a/target/linux/sunxi/patches-5.4/207-add5-sunxi-ths_gpadc_linux.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/207-add5-sunxi-ths_gpadc_linux.patch	2021-05-09 17:02:30.546713263 +0300
+--- a/target/linux/sunxi/patches-5.4/207-add5-sunxi-ths_gpadc_linux.patch
++++ b/target/linux/sunxi/patches-5.4/207-add5-sunxi-ths_gpadc_linux.patch
 @@ -0,0 +1,107 @@
 +--- a/drivers/iio/adc/Kconfig
 ++++ b/drivers/iio/adc/Kconfig
@@ -2210,8 +2041,8 @@
 + struct sun4i_gpadc_dev {
 + 	struct device			*dev;
 + 	struct regmap			*regmap;
---- a/target/linux/sunxi/image/cortexa8.mk	2021-04-19 22:10:14.000000000 +0300
-+++ b/target/linux/sunxi/image/cortexa8.mk	2021-05-08 21:04:39.779977025 +0300
+--- a/target/linux/sunxi/image/cortexa8.mk
++++ b/target/linux/sunxi/image/cortexa8.mk
 @@ -11,6 +11,14 @@
  endef
  TARGET_DEVICES += cubietech_a10-cubieboard
@@ -2227,335 +2058,8 @@
  define Device/linksprite_a10-pcduino
    DEVICE_VENDOR := LinkSprite
    DEVICE_MODEL := pcDuino
---- a/target/linux/sunxi/patches-5.4/210-add-spdif-PA17-red_led-opi-zero.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/210-add-spdif-PA17-red_led-opi-zero.patch	2021-05-08 21:04:39.779977025 +0300
-@@ -0,0 +1,40 @@
-+--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts	2020-01-29 16:02:39.000000000 +0200
-++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts	2020-02-01 11:37:12.000000000 +0200
-+@@ -123,6 +150,24 @@
-+ 		reset-gpios = <&r_pio 0 7 GPIO_ACTIVE_LOW>;
-+ 		post-power-on-delay-ms = <200>;
-+ 	};
-++
-++	sound_spdif {
-++		compatible = "simple-audio-card";
-++		simple-audio-card,name = "On-board SPDIF";
-++
-++		simple-audio-card,cpu {
-++			sound-dai = <&spdif>;
-++		};
-++
-++		simple-audio-card,codec {
-++			sound-dai = <&spdif_out>;
-++		};
-++	};
-++
-++	spdif_out: spdif-out {
-++		#sound-dai-cells = <0>;
-++		compatible = "linux,spdif-dit";
-++	};
-+ };
-+ 
-+ &cpu0 {
-+@@ -244,6 +310,12 @@
-+ 	pinctrl-0 = <&uart2_pins>;
-+ 	status = "disabled";
-+ };
-++
-++&spdif {
-++	pinctrl-names = "default";
-++	pinctrl-0 = <&spdif_tx_pin>;
-++	status = "disabled";
-++};
-+ 
-+ &usb_otg {
-+ 	dr_mode = "peripheral";
---- a/target/linux/sunxi/patches-5.4/211-add-button-opi-zero.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/211-add-button-opi-zero.patch	2021-05-08 21:04:39.779977025 +0300
-@@ -0,0 +1,109 @@
-+--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts	2020-01-29 16:02:39.000000000 +0200
-++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts	2020-02-01 11:37:12.000000000 +0200
-+@@ -92,6 +120,76 @@
-+ 		pinctrl-0 = <&w1_pins>;
-+ 		status = "disabled";
-+ 	};
-++
-++	gpio-keys-user {
-++		compatible = "gpio-keys";
-++		pinctrl-names = "default";
-++		pinctrl-0 = <&gpio_keys>;
-++		status = "disabled";
-++
-++		g-keys_volup {
-++			label = "GPIO KEY_VOLUMEUP";
-++			linux,code = <115>; /* 115, see /usr/include/linux/input-event-codes.h */
-++			gpios = <&pio 0 16 GPIO_ACTIVE_LOW>; /* PA16 GPIO_ACTIVE_LOW */
-++		};
-++
-++		g-keys_voldown {
-++			label = "GPIO KEY_VOLUMEDOWN";
-++			linux,code = <114>; /* 114, see /usr/include/linux/input-event-codes.h */
-++			gpios = <&pio 0 15 GPIO_ACTIVE_LOW>; /* PA15 GPIO_ACTIVE_LOW */
-++		};
-++
-++		g-keys_power {
-++			label = "GPIO KEY_POWER";
-++			linux,code = <116>; /* 116, see /usr/include/linux/input-event-codes.h */
-++			gpios = <&pio 0 14 GPIO_ACTIVE_LOW>; /* PA14 GPIO_ACTIVE_LOW */
-++		};
-++
-++		g-keys_chanup {
-++			label = "GPIO KEY_CHANNELUP";
-++			linux,code = <402>; /* 402, see /usr/include/linux/input-event-codes.h */
-++			gpios = <&pio 0 13 GPIO_ACTIVE_LOW>; /* PA13 GPIO_ACTIVE_LOW */
-++		};
-++
-++		g-keys_chandown {
-++			label = "GPIO KEY_CHANNELDOWN";
-++			linux,code = <403>; /* 403, see /usr/include/linux/input-event-codes.h */
-++			gpios = <&pio 0 2 GPIO_ACTIVE_LOW>; /* PA2 GPIO_ACTIVE_LOW */
-++		};
-++	};
-++
-++	rotary_button {
-++		compatible = "gpio-keys";
-++		pinctrl-names = "default";
-++		pinctrl-0 = <&pinctrl_button>;
-++		status = "disabled";
-++
-++		rotary_button_enter {
-++			label = "ENTER";
-++			linux,code = <99>; /* KEY_SYSRQ - see linux/input.h */
-++			gpios = <&pio 0 0 GPIO_ACTIVE_LOW>; /* PA0 GPIO_ACTIVE_LOW */
-++		};
-++	};
-++
-++	rotary_axis {
-++		/* https://mchehab.fedorapeople.org/kernel_docs/input/devices/rotary-encoder.html */
-++		compatible = "rotary-encoder";
-++		pinctrl-names = "default";
-++		pinctrl-0 = <&pinctrl_rotary>;
-++		gpios = <&pio 0 1 GPIO_ACTIVE_LOW>, <&pio 0 3 GPIO_ACTIVE_LOW>; /* PA1 PA3 GPIO_ACTIVE_LOW */
-++		linux,axis = <1>; /* REL_Y */
-++		rotary-encoder,relative-axis;
-++		rotary-encoder,half-period;
-++		status = "disabled";
-++	};
-++
-++	pps {
-++		compatible = "pps-gpio";
-++		pinctrl-names = "default";
-++		pinctrl-0 = <&pps_pins>;
-++		gpios = <&pio 0 7 0>; /* PA7 */
-++		status = "disabled";
-++	};
-+ 
-+ 	reg_vcc_wifi: reg_vcc_wifi {
-+ 		compatible = "regulator-fixed";
-+@@ -225,6 +299,29 @@
-+ 		drive = <SUN4I_PINCTRL_10_MA>;
-+ 		pull = <SUN4I_PINCTRL_NO_PULL>;
-+ 	};
-++
-++	gpio_keys: gpio_keys {
-++		pins = "PA13","PA14","PA15","PA16","PA2";
-++		function = "gpio_in";
-++		bias-pull-up;
-++	};
-++
-++	pinctrl_button: pinctrl_button {
-++		pins = "PA0";
-++		function = "gpio_in";
-++		bias-pull-up;
-++	};
-++
-++	pinctrl_rotary: pinctrl_rotary {
-++		pins = "PA1","PA3";
-++		function = "gpio_in";
-++		bias-pull-up;
-++	};
-++
-++	pps_pins: pps_pins {
-++		pins = "PA7";
-++		function = "gpio_in";
-++	};
-+ };
-+ 
-+ &pwm {
---- a/target/linux/sunxi/patches-5.4/212-add-spi-flash-opi-zero.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/212-add-spi-flash-opi-zero.patch	2021-05-08 21:04:39.779977025 +0300
-@@ -0,0 +1,48 @@
-+--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-+@@ -60,6 +70,7 @@
-+ 		/* ethernet0 is the H3 emac, defined in sun8i-h3.dtsi */
-+ 		ethernet0 = &emac;
-+ 		ethernet1 = &xr819;
-++		spi0 = &spi0;
-+ 	};
-+ 
-+ 	chosen {
-+@@ -327,7 +400,7 @@
-+ 
-+ &spi0 {
-+ 	/* Disable SPI NOR by default: it optional on Orange Pi Zero boards */
-+-	status = "disabled";
-++	status = "okay";
-+ 
-+ 	flash@0 {
-+ 		#address-cells = <1>;
-+@@ -335,6 +400,28 @@
-+ 		compatible = "mxicy,mx25l1606e", "winbond,w25q128";
-+ 		reg = <0>;
-+ 		spi-max-frequency = <40000000>;
-++
-++		partitions: partitions {
-++			compatible = "fixed-partitions";
-++			#address-cells = <0x01>;
-++			#size-cells = <0x01>;
-++
-++			partition@0 {
-++				label = "uboot";
-++				reg = <0x0 0x80000>;
-++			};
-++
-++			partition@80000 {
-++				label = "dtb";
-++				reg = <0x80000 0x10000>;
-++			};
-++
-++			partition@90000 {
-++				compatible = "denx,uimage";
-++				label = "firmware";
-++				reg = <0x90000 0xf70000>;
-++			};
-++		};
-+ 	};
-+ };
-+ 
---- a/target/linux/sunxi/patches-5.4/213-add-i2c-opi-zero.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/213-add-i2c-opi-zero.patch	2021-05-08 21:04:39.779977025 +0300
-@@ -0,0 +1,11 @@
-+--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-+@@ -61,6 +70,8 @@
-+ 		ethernet0 = &emac;
-+ 		ethernet1 = &xr819;
-+ 		spi0 = &spi0;
-++		i2c0 = &i2c0;
-++		i2c1 = &i2c1;
-+ 	};
-+ 
-+ 	chosen {
---- a/target/linux/sunxi/patches-5.4/213-dts-add-orangepi-zero-lts.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/213-dts-add-orangepi-zero-lts.patch	2021-05-09 22:18:28.703644760 +0300
-@@ -0,0 +1,31 @@
-+--- a/arch/arm/boot/dts/Makefile
-++++ b/arch/arm/boot/dts/Makefile
-+@@ -1099,6 +1110,7 @@ dtb-$(CONFIG_MACH_SUN8I) += \
-+ 	sun8i-h2-plus-bananapi-m2-zero.dtb \
-+ 	sun8i-h2-plus-libretech-all-h3-cc.dtb \
-+ 	sun8i-h2-plus-orangepi-r1.dtb \
-++	sun8i-h2-plus-orangepi-zero-lts.dtb \
-+ 	sun8i-h2-plus-orangepi-zero.dtb \
-+ 	sun8i-h3-bananapi-m2-plus.dtb \
-+ 	sun8i-h3-bananapi-m2-plus-v1.2.dtb \
-+--- /dev/null
-++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero-lts.dts
-+@@ -0,0 +1,18 @@
-++
-++/* Orange Pi Zero Lts is based on Orange Pi Zero design */
-++#include "sun8i-h2-plus-orangepi-zero.dts"
-++
-++/ {
-++	model = "Xunlong Orange Pi Zero Lts";
-++	compatible = "xunlong,orangepi-zero-lts", "allwinner,sun8i-h2-plus";
-++};
-++
-++&cpu_hot_trip {
-++	temperature = <32500>; /* ~65°C */
-++	hysteresis = <1000>;
-++};
-++
-++&cpu_very_hot_trip {
-++	temperature = <45000>; /* ~90°C */
-++	hysteresis = <1000>;
-++};
---- a/target/linux/sunxi/patches-5.4/214-usb_otg-opi-zero.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/214-usb_otg-opi-zero.patch	2021-05-08 21:04:39.779977025 +0300
-@@ -0,0 +1,11 @@
-+--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-+@@ -388,7 +402,7 @@
-+ };
-+ 
-+ &usb_otg {
-+-	dr_mode = "peripheral";
-++	dr_mode = "otg";
-+ 	status = "okay";
-+ };
-+ 
---- a/target/linux/sunxi/patches-5.4/215-pinctrl_wifi-wake_r-wifi-rst_opi-zero.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-5.4/215-pinctrl_wifi-wake_r-wifi-rst_opi-zero.patch	2021-05-09 17:03:26.134686669 +0300
-@@ -0,0 +1,44 @@
-+--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
-+@@ -193,6 +210,8 @@
-+ 
-+ 	wifi_pwrseq: wifi_pwrseq {
-+ 		compatible = "mmc-pwrseq-simple";
-++		pinctrl-names = "default";
-++		pinctrl-0 = <&r_wifi_rst>;
-+ 		reset-gpios = <&r_pio 0 7 GPIO_ACTIVE_LOW>;
-+ 		post-power-on-delay-ms = <200>;
-+ 	};
-+@@ -257,11 +270,20 @@
-+ 	xr819: sdio_wifi@1 {
-+ 		reg = <1>;
-+ 		compatible = "xradio,xr819";
-++		pinctrl-names = "default";
-++		pinctrl-0 = <&wifi_wake>;
-+ 		interrupt-parent = <&pio>;
-+ 		interrupts = <6 10 IRQ_TYPE_EDGE_RISING>;
-+ 		interrupt-names = "host-wake";
-+ 	};
-+ };
-++
-++&r_pio {
-++	r_wifi_rst: r-wifi-rst {
-++		pins = "PL7";
-++		function = "gpio_out";
-++	};
-++};
-+ 
-+ &ohci0 {
-+ 	status = "okay";
-+@@ -321,6 +342,11 @@
-+ 		pins = "PA7";
-+ 		function = "gpio_in";
-+ 	};
-++
-++	wifi_wake: wifi-wake {
-++		pins = "PG10";
-++		function = "gpio_in";
-++	};
-+ };
-+ 
-+ &pwm {
---- a/target/linux/sunxi/base-files/etc/board.d/01_leds	2021-04-19 22:10:14.000000000 +0300
-+++ b/target/linux/sunxi/base-files/etc/board.d/01_leds	2021-05-08 21:04:39.783976932 +0300
-@@ -12,6 +12,9 @@
- 	ucidef_set_led_netdev "wan" "WAN" "nanopi:green:wan" "eth0"
- 	ucidef_set_led_netdev "lan" "LAN" "nanopi:green:lan" "eth1"
- 	;;
-+xunlong,orangepi-zero|xunlong,orangepi-zero-lts)
-+	ucidef_set_led_netdev "lan" "LAN" "orangepi:red:status" "eth0"
-+	;;
- esac
- 
- board_config_flush
---- a/target/linux/sunxi/Makefile	2021-04-19 22:10:14.000000000 +0300
-+++ b/target/linux/sunxi/Makefile	2021-05-21 12:02:10.683190924 +0300
+--- a/target/linux/sunxi/Makefile
++++ b/target/linux/sunxi/Makefile
 @@ -8,7 +8,7 @@
  BOARD:=sunxi
  BOARDNAME:=Allwinner A1x/A20/A3x/H3/H5/R40
@@ -2565,8 +2069,8 @@
  
  KERNEL_PATCHVER:=5.4
  KERNEL_TESTING_PATCHVER:=5.4
---- a/target/linux/sunxi/cortexspia7/config-5.4	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/cortexspia7/config-5.4	2021-05-21 12:15:10.306325751 +0300
+--- a/target/linux/sunxi/cortexspia7/config-5.4
++++ b/target/linux/sunxi/cortexspia7/config-5.4
 @@ -0,0 +1,24 @@
 +CONFIG_ARCH_32BIT_OFF_T=y
 +CONFIG_ARCH_HAS_BINFMT_FLAT=y
@@ -2592,8 +2096,8 @@
 +# CONFIG_MTD_IMPA7 is not set
 +CONFIG_MTD_SPLIT_SUPPORT=y
 +CONFIG_MULTI_IRQ_HANDLER=y
---- a/target/linux/sunxi/cortexspia7/target.mk	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/cortexspia7/target.mk	2021-05-21 12:16:08.512316695 +0300
+--- a/target/linux/sunxi/cortexspia7/target.mk
++++ b/target/linux/sunxi/cortexspia7/target.mk
 @@ -0,0 +1,9 @@
 +# SPDX-License-Identifier: GPL-2.0-only
 +#
@@ -2604,8 +2108,8 @@
 +BOARDNAME:=Allwinner /H2+spi/H3spi
 +CPU_TYPE:=cortex-a7
 +CPU_SUBTYPE:=neon-vfpv4
---- a/target/linux/sunxi/image/cortexspia7.mk	1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/image/cortexspia7.mk	2021-05-21 12:07:09.276248751 +0300
+--- a/target/linux/sunxi/image/cortexspia7.mk
++++ b/target/linux/sunxi/image/cortexspia7.mk
 @@ -0,0 +1,78 @@
 +
 +define Build/append-uboot
@@ -2685,8 +2189,8 @@
 +  SOC := sun8i-h2-plus
 +endef
 +TARGET_DEVICES += xunlong_orangepi-zero
---- a/package/boot/uboot-sunxi/Makefile	2021-04-19 22:10:14.000000000 +0300
-+++ b/package/boot/uboot-sunxi/Makefile	2021-05-21 12:19:24.875765019 +0300
+--- a/package/boot/uboot-sunxi/Makefile
++++ b/package/boot/uboot-sunxi/Makefile
 @@ -95,6 +95,12 @@
    BUILD_DEVICES:=cubietech_a10-cubieboard
  endef
@@ -2734,7 +2238,7 @@
  define U-Boot/orangepi_one
    BUILD_SUBTARGET:=cortexa7
    NAME:=Orange Pi One (H3)
-@@ -315,6 +348,7 @@
+@@ -331,6 +364,7 @@
  	Bananapi_M2_Ultra \
  	Bananapro \
  	Cubieboard \
@@ -2742,16 +2246,16 @@
  	Cubieboard2 \
  	Cubietruck \
  	Hummingbird_A31 \
-@@ -333,6 +367,7 @@
- 	nanopi_neo2 \
+@@ -350,6 +351,7 @@
  	nanopi_r1 \
+    nanopi_r1s_h5 \
  	orangepi_zero \
 +	orangepi_zero_lts \
  	orangepi_r1 \
  	orangepi_one \
  	orangepi_pc \
---- a/package/boot/uboot-sunxi/patches/001-add-distro_bootcmd.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/package/boot/uboot-sunxi/patches/001-add-distro_bootcmd.patch	2021-05-24 11:03:32.067860731 +0300
+--- a/package/boot/uboot-sunxi/patches/001-add-distro_bootcmd.patch
++++ b/package/boot/uboot-sunxi/patches/001-add-distro_bootcmd.patch
 @@ -0,0 +1,20 @@
 +--- a/include/config_distro_bootcmd.h
 ++++ b/include/config_distro_bootcmd.h
@@ -2773,30 +2277,8 @@
 + 		BOOTENV_SET_NVME_NEED_INIT                                \
 + 		BOOTENV_SET_IDE_NEED_INIT                                 \
 + 		BOOTENV_SET_VIRTIO_NEED_INIT                              \
---- a/package/boot/uboot-sunxi/patches/001-add-mtd-spi-orangepi-zero.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/package/boot/uboot-sunxi/patches/001-add-mtd-spi-orangepi-zero.patch	2021-05-20 23:20:18.798794000 +0300
-@@ -0,0 +1,19 @@
-+--- a/arch/arm/dts/sun8i-h2-plus-orangepi-zero.dts	2020-04-13 18:02:18.000000000 +0300
-++++ b/arch/arm/dts/sun8i-h2-plus-orangepi-zero.dts	2021-02-11 12:02:27.730670592 +0200
-+@@ -59,6 +59,7 @@
-+ 		/* ethernet0 is the H3 emac, defined in sun8i-h3.dtsi */
-+ 		ethernet0 = &emac;
-+ 		ethernet1 = &xr819;
-++		spi0 = &spi0;
-+ 	};
-+ 
-+ 	chosen {
-+@@ -164,7 +165,7 @@
-+ 
-+ &spi0 {
-+ 	/* Disable SPI NOR by default: it optional on Orange Pi Zero boards */
-+-	status = "disabled";
-++	status = "okay";
-+ 
-+ 	flash@0 {
-+ 		#address-cells = <1>;
---- a/package/boot/uboot-sunxi/patches/001-add-spi-orangepi_r1_defconfig.patch	1970-01-01 03:00:00.000000000 +0300
-+++ b/package/boot/uboot-sunxi/patches/001-add-spi-orangepi_r1_defconfig.patch	2021-05-20 15:35:36.906256000 +0300
+--- a/package/boot/uboot-sunxi/patches/001-add-spi-orangepi_r1_defconfig.patch
++++ b/package/boot/uboot-sunxi/patches/001-add-spi-orangepi_r1_defconfig.patch
 @@ -0,0 +1,15 @@
 +--- a/configs/orangepi_r1_defconfig	2020-04-13 18:02:18.000000000 +0300
 ++++ b/configs/orangepi_r1_defconfig	2021-02-11 11:56:03.965480643 +0200
@@ -2813,8 +2295,8 @@
 ++CONFIG_SPI_FLASH=y
 ++CONFIG_SPI_FLASH_WINBOND=y
 ++CONFIG_SPI_FLASH_MACRONIX=y
---- a/package/boot/uboot-sunxi/uEnv-spi16mb.txt	1970-01-01 03:00:00.000000000 +0300
-+++ b/package/boot/uboot-sunxi/uEnv-spi16mb.txt	2021-05-22 01:21:32.495318000 +0300
+--- a/package/boot/uboot-sunxi/uEnv-spi16mb.txt
++++ b/package/boot/uboot-sunxi/uEnv-spi16mb.txt
 @@ -0,0 +1,7 @@
 +setenv fdt_high ffffffff
 +setenv bootargs console=ttyS0,115200 earlyprintk rootfstype=squashfs mtdparts=spi0.0:512k(uboot),64k(dtb),-(firmware)
@@ -2823,8 +2305,8 @@
 +setenv loadkernel sf read $kernel_addr_r 0x90000 0x400000
 +setenv uenvcmd run loadprobe \&\& run loadkernel \&\& run loaddtb \&\& bootm $kernel_addr_r - $fdt_addr_r
 +run uenvcmd
---- a/package/base-files/files/bin/config_generate	2021-04-19 22:10:14.000000000 +0300
-+++ b/package/base-files/files/bin/config_generate	2021-05-08 21:04:39.783976932 +0300
+--- a/package/base-files/files/bin/config_generate
++++ b/package/base-files/files/bin/config_generate
 @@ -4,6 +4,9 @@
  
  . /usr/share/libubox/jshn.sh
@@ -2835,7 +2317,7 @@
  [ -s $CFG ] || /bin/board_detect || exit 1
  [ -s /etc/config/network -a -s /etc/config/system ] && exit 0
  
-@@ -140,7 +143,7 @@
+@@ -162,7 +165,7 @@
  		static)
  			local ipad
  			case "$1" in
@@ -2844,7 +2326,7 @@
  				*) ipad=${ipaddr:-"192.168.$((addr_offset++)).1"} ;;
  			esac
  
-@@ -280,8 +283,12 @@
+@@ -302,8 +302,12 @@
  	uci -q batch <<-EOF
  		delete system.@system[0]
  		add system system
@@ -2859,7 +2341,7 @@
  		set system.@system[-1].ttylogin='0'
  		set system.@system[-1].log_size='64'
  		set system.@system[-1].urandom_seed='0'
-@@ -300,7 +307,7 @@
+@@ -322,7 +326,7 @@
  		json_select system
  			local hostname
  			if json_get_var hostname hostname; then
@@ -2868,8 +2350,8 @@
  			fi
  
  			local compat_version
---- a/package/base-files/image-config.in	2021-04-19 22:10:14.000000000 +0300
-+++ b/package/base-files/image-config.in	2021-05-08 21:04:39.783976932 +0300
+--- a/package/base-files/image-config.in
++++ b/package/base-files/image-config.in
 @@ -76,7 +76,7 @@
  config TARGET_PREINIT_IP
  	string
@@ -2888,17 +2370,17 @@
  	help
  		Broadcast address to which to send preinit network messages, as
  		as failsafe messages
---- a/package/base-files/Makefile	2021-04-19 22:10:14.000000000 +0300
-+++ b/package/base-files/Makefile	2021-05-08 21:04:39.783976932 +0300
-@@ -82,9 +82,9 @@
- 	echo 'pi_init_cmd=$(if $(CONFIG_TARGET_INIT_CMD),$(CONFIG_TARGET_INIT_CMD),"/sbin/init")' >>$(1)/lib/preinit/00_preinit.conf
- 	echo 'pi_init_suppress_stderr="$(CONFIG_TARGET_INIT_SUPPRESS_STDERR)"' >>$(1)/lib/preinit/00_preinit.conf
- 	echo 'pi_ifname=$(if $(CONFIG_TARGET_PREINIT_IFNAME),$(CONFIG_TARGET_PREINIT_IFNAME),"")' >>$(1)/lib/preinit/00_preinit.conf
--	echo 'pi_ip=$(if $(CONFIG_TARGET_PREINIT_IP),$(CONFIG_TARGET_PREINIT_IP),"192.168.1.1")' >>$(1)/lib/preinit/00_preinit.conf
-+	echo 'pi_ip=$(if $(CONFIG_TARGET_PREINIT_IP),$(CONFIG_TARGET_PREINIT_IP),"192.168.10.1")' >>$(1)/lib/preinit/00_preinit.conf
- 	echo 'pi_netmask=$(if $(CONFIG_TARGET_PREINIT_NETMASK),$(CONFIG_TARGET_PREINIT_NETMASK),"255.255.255.0")' >>$(1)/lib/preinit/00_preinit.conf
--	echo 'pi_broadcast=$(if $(CONFIG_TARGET_PREINIT_BROADCAST),$(CONFIG_TARGET_PREINIT_BROADCAST),"192.168.1.255")' >>$(1)/lib/preinit/00_preinit.conf
-+	echo 'pi_broadcast=$(if $(CONFIG_TARGET_PREINIT_BROADCAST),$(CONFIG_TARGET_PREINIT_BROADCAST),"192.168.10.255")' >>$(1)/lib/preinit/00_preinit.conf
- 	echo 'pi_preinit_net_messages="$(CONFIG_TARGET_PREINIT_SHOW_NETMSG)"' >>$(1)/lib/preinit/00_preinit.conf
- 	echo 'pi_preinit_no_failsafe_netmsg="$(CONFIG_TARGET_PREINIT_SUPPRESS_FAILSAFE_NETMSG)"' >>$(1)/lib/preinit/00_preinit.conf
- 	echo 'pi_preinit_no_failsafe="$(CONFIG_TARGET_PREINIT_DISABLE_FAILSAFE)"' >>$(1)/lib/preinit/00_preinit.conf
+--- a/package/base-files/Makefile
++++ b/package/base-files/Makefile
+@@ -82,9 +82,9 @@ 
+   echo 'pi_init_cmd=$(if $(CONFIG_TARGET_INIT_CMD),$(CONFIG_TARGET_INIT_CMD),"/sbin/init")' >>$(1)/lib/preinit/00_preinit.conf
+   echo 'pi_init_suppress_stderr="$(CONFIG_TARGET_INIT_SUPPRESS_STDERR)"' >>$(1)/lib/preinit/00_preinit.conf
+   echo 'pi_ifname=$(if $(CONFIG_TARGET_PREINIT_IFNAME),$(CONFIG_TARGET_PREINIT_IFNAME),"")' >>$(1)/lib/preinit/00_preinit.conf
+-  echo 'pi_ip=$(if $(CONFIG_TARGET_PREINIT_IP),$(CONFIG_TARGET_PREINIT_IP),"192.168.1.1")' >>$(1)/lib/preinit/00_preinit.conf
++  echo 'pi_ip=$(if $(CONFIG_TARGET_PREINIT_IP),$(CONFIG_TARGET_PREINIT_IP),"192.168.10.1")' >>$(1)/lib/preinit/00_preinit.conf
+   echo 'pi_netmask=$(if $(CONFIG_TARGET_PREINIT_NETMASK),$(CONFIG_TARGET_PREINIT_NETMASK),"255.255.255.0")' >>$(1)/lib/preinit/00_preinit.conf
+-  echo 'pi_broadcast=$(if $(CONFIG_TARGET_PREINIT_BROADCAST),$(CONFIG_TARGET_PREINIT_BROADCAST),"192.168.1.255")' >>$(1)/lib/preinit/00_preinit.conf
++  echo 'pi_broadcast=$(if $(CONFIG_TARGET_PREINIT_BROADCAST),$(CONFIG_TARGET_PREINIT_BROADCAST),"192.168.10.255")' >>$(1)/lib/preinit/00_preinit.conf
+   echo 'pi_preinit_net_messages="$(CONFIG_TARGET_PREINIT_SHOW_NETMSG)"' >>$(1)/lib/preinit/00_preinit.conf
+   echo 'pi_preinit_no_failsafe_netmsg="$(CONFIG_TARGET_PREINIT_SUPPRESS_FAILSAFE_NETMSG)"' >>$(1)/lib/preinit/00_preinit.conf
+   echo 'pi_preinit_no_failsafe="$(CONFIG_TARGET_PREINIT_DISABLE_FAILSAFE)"' >>$(1)/lib/preinit/00_preinit.conf
