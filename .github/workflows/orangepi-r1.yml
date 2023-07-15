@@ -7,9 +7,8 @@ on:
   workflow_dispatch:
 
 env:
-  #REPO_URL: https://github.com/immortalwrt/immortalwrt
   REPO_URL: https://github.com/openwrt/openwrt
-  REPO_BRANCH: v21.02.7
+  REPO_BRANCH: v19.07.10
   CONFIG_FILE: config/orangepi-r1.config
 
 jobs:
@@ -41,7 +40,7 @@ jobs:
     - name: Apply patches
       working-directory: ./openwrt
       run: |
-        patch -p1 < "${GITHUB_WORKSPACE}/diy/orangepi-r1/All-openwrt-21.02.patch"
+        patch -p1 --ignore-whitespace < "${GITHUB_WORKSPACE}/diy/orangepi-r1/Openwrt-19.07.10.patch"
         sed -i '$a src-git opicyberwrt https://github.com/lukaskronus/opi-r1-cyberwrt' feeds.conf.default
         scripts/feeds update -a && scripts/feeds install -a
     
