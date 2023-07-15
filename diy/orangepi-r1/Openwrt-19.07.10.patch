@@ -1,5 +1,5 @@
---- a/target/linux/sunxi/config-4.14    2021-03-02 21:21:50.746649436 +0200
-+++ b/target/linux/sunxi/config-4.14    2021-01-26 20:23:25.570905130 +0200
+--- a/target/linux/sunxi/config-4.14
++++ b/target/linux/sunxi/config-4.14
 @@ -40,7 +40,9 @@
  CONFIG_ARM_ATAG_DTB_COMPAT=y
  # CONFIG_ARM_ATAG_DTB_COMPAT_CMDLINE_EXTEND is not set
@@ -269,8 +269,8 @@
  # CONFIG_WQ_POWER_EFFICIENT_DEFAULT is not set
  CONFIG_XPS=y
  CONFIG_XZ_DEC_ARM=y
---- a/target/linux/sunxi/modules.mk 2021-03-02 21:21:50.746649436 +0200
-+++ b/target/linux/sunxi/modules.mk 2021-01-22 00:11:49.808136915 +0200
+--- a/target/linux/sunxi/modules.mk
++++ b/target/linux/sunxi/modules.mk
 @@ -25,15 +25,55 @@
  define KernelPackage/sunxi-ir
      SUBMENU:=$(OTHER_MENU)
@@ -631,8 +631,8 @@
 +endef
 +
 +$(eval $(call KernelPackage,rotary_encoder))
---- a/target/linux/sunxi/patches-4.14/202-add0-pinctrl_wifi-xr819-opi-zero.patch    1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/202-add0-pinctrl_wifi-xr819-opi-zero.patch    2021-01-22 00:11:49.808136915 +0200
+--- a/target/linux/sunxi/patches-4.14/202-add0-pinctrl_wifi-xr819-opi-zero.patch
++++ b/target/linux/sunxi/patches-4.14/202-add0-pinctrl_wifi-xr819-opi-zero.patch
 @@ -0,0 +1,31 @@
 +--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
 ++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
@@ -665,8 +665,8 @@
 +   };
 + };
 + 
---- a/target/linux/sunxi/patches-4.14/203-add-enable-soc_audio-routing-opi-zero.patch   1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/203-add-enable-soc_audio-routing-opi-zero.patch   2021-01-22 00:11:49.808136915 +0200
+--- a/target/linux/sunxi/patches-4.14/203-add-enable-soc_audio-routing-opi-zero.patch
++++ b/target/linux/sunxi/patches-4.14/203-add-enable-soc_audio-routing-opi-zero.patch
 @@ -0,0 +1,14 @@
 +--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
 ++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
@@ -682,8 +682,8 @@
 + 
 + &spi0 {
 +   /* Disable SPI NOR by default: it optional on Orange Pi Zero boards */
---- a/target/linux/sunxi/patches-4.14/204-add-IR-pinctrl-opi-zero.patch 1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/204-add-IR-pinctrl-opi-zero.patch 2021-01-22 00:11:49.808136915 +0200
+--- a/target/linux/sunxi/patches-4.14/204-add-IR-pinctrl-opi-zero.patch
++++ b/target/linux/sunxi/patches-4.14/204-add-IR-pinctrl-opi-zero.patch
 @@ -0,0 +1,15 @@
 +--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
 ++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
@@ -700,8 +700,8 @@
 + 
 + &spi0 {
 +   /* Disable SPI NOR by default: it optional on Orange Pi Zero boards */
---- a/target/linux/sunxi/patches-4.14/205-add-w1-gpio_pinctrl-opi-zero.patch    1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/205-add-w1-gpio_pinctrl-opi-zero.patch    2021-01-22 00:11:49.808136915 +0200
+--- a/target/linux/sunxi/patches-4.14/205-add-w1-gpio_pinctrl-opi-zero.patch
++++ b/target/linux/sunxi/patches-4.14/205-add-w1-gpio_pinctrl-opi-zero.patch
 @@ -0,0 +1,39 @@
 +--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
 ++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
@@ -742,8 +742,8 @@
 + 
 + &spi0 {
 +   /* Disable SPI NOR by default: it optional on Orange Pi Zero boards */
---- a/target/linux/sunxi/patches-4.14/206-add-PA5-pwm_pin-opi-zero.patch    1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/206-add-PA5-pwm_pin-opi-zero.patch    2021-01-22 00:11:49.808136915 +0200
+--- a/target/linux/sunxi/patches-4.14/206-add-PA5-pwm_pin-opi-zero.patch
++++ b/target/linux/sunxi/patches-4.14/206-add-PA5-pwm_pin-opi-zero.patch
 @@ -0,0 +1,22 @@
 +--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
 ++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
@@ -767,11 +767,11 @@
 + 
 + &spi0 {
 +   /* Disable SPI NOR by default: it optional on Orange Pi Zero boards */
---- a/target/linux/sunxi/patches-4.14/207-add0-cpu-freg-ths.patch   1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/207-add0-cpu-freg-ths.patch   2021-01-22 00:11:49.808136915 +0200
+--- a/target/linux/sunxi/patches-4.14/207-add0-cpu-freg-ths.patch
++++ b/target/linux/sunxi/patches-4.14/207-add0-cpu-freg-ths.patch
 @@ -0,0 +1,751 @@
-+--- a/arch/arm/boot/dts/sun8i-h3.dtsi  2020-01-29 16:02:39.000000000 +0200
-++++ b/arch/arm/boot/dts/sun8i-h3.dtsi  2020-02-01 11:37:12.000000000 +0200
++--- a/arch/arm/boot/dts/sun8i-h3.dtsi
+++++ b/arch/arm/boot/dts/sun8i-h3.dtsi
 +@@ -43,32 +43,77 @@
 + #include "sunxi-h3-h5.dtsi"
 + 
@@ -917,8 +917,8 @@
 + &mmc0 {
 +   compatible = "allwinner,sun7i-a20-mmc";
 +   clocks = <&ccu CLK_BUS_MMC0>,
-+--- a/arch/arm/boot/dts/sunxi-h3-h5.dtsi   2020-01-29 16:02:39.000000000 +0200
-++++ b/arch/arm/boot/dts/sunxi-h3-h5.dtsi   2020-02-01 11:37:12.000000000 +0200
++--- a/arch/arm/boot/dts/sunxi-h3-h5.dtsi
+++++ b/arch/arm/boot/dts/sunxi-h3-h5.dtsi
 +@@ -40,9 +40,11 @@
 +  *     OTHER DEALINGS IN THE SOFTWARE.
 +  */
@@ -1521,8 +1521,8 @@
 +       };
 +   };
 + };
---- a/target/linux/sunxi/patches-4.14/207-add1-thermal_sensor-opi-zero.patch    1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/207-add1-thermal_sensor-opi-zero.patch    2021-01-22 00:11:49.808136915 +0200
+--- a/target/linux/sunxi/patches-4.14/207-add1-thermal_sensor-opi-zero.patch
++++ b/target/linux/sunxi/patches-4.14/207-add1-thermal_sensor-opi-zero.patch
 @@ -0,0 +1,30 @@
 +--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
 ++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
@@ -1554,8 +1554,8 @@
 + };
 + 
 + &ehci0 {
---- a/target/linux/sunxi/patches-4.14/207-add2-thermal_zone-opi-zero.patch  1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/207-add2-thermal_zone-opi-zero.patch  2021-01-22 00:11:49.808136915 +0200
+--- a/target/linux/sunxi/patches-4.14/207-add2-thermal_zone-opi-zero.patch
++++ b/target/linux/sunxi/patches-4.14/207-add2-thermal_zone-opi-zero.patch
 @@ -0,0 +1,44 @@
 +--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
 ++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
@@ -1601,11 +1601,11 @@
 + 
 + &ehci0 {
 +   status = "okay";
---- a/target/linux/sunxi/patches-4.14/207-add3-sunxi-ths_linux.patch    1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/207-add3-sunxi-ths_linux.patch    2021-01-22 00:11:49.808136915 +0200
+--- a/target/linux/sunxi/patches-4.14/207-add3-sunxi-ths_linux.patch
++++ b/target/linux/sunxi/patches-4.14/207-add3-sunxi-ths_linux.patch
 @@ -0,0 +1,899 @@
-+--- a/Documentation/devicetree/bindings/mfd/sun4i-gpadc.txt    2019-10-01 09:26:13.000000000 +0300
-++++ b/Documentation/devicetree/bindings/mfd/sun4i-gpadc.txt    2019-03-12 10:34:30.222802201 +0200
++--- a/Documentation/devicetree/bindings/mfd/sun4i-gpadc.txt
+++++ b/Documentation/devicetree/bindings/mfd/sun4i-gpadc.txt
 +@@ -4,12 +4,35 @@
 + and sometimes as a touchscreen controller.
 + 
@@ -1673,8 +1673,8 @@
 + sun4i, sun5i and sun6i SoCs are also supported via the older binding:
 + 
 + sun4i resistive touchscreen controller
-+--- a/drivers/thermal/Kconfig  2019-10-01 09:26:13.000000000 +0300
-++++ b/drivers/thermal/Kconfig  2019-03-12 10:34:36.414619070 +0200
++--- a/drivers/thermal/Kconfig
+++++ b/drivers/thermal/Kconfig
 +@@ -407,11 +415,29 @@
 +     Enable this option if you want to have support for thermal management
 +     controller present in Mediatek SoCs
@@ -1705,8 +1705,8 @@
 + menu "Texas Instruments thermal drivers"
 + depends on ARCH_HAS_BANDGAP || COMPILE_TEST
 + depends on HAS_IOMEM
-+--- a/drivers/thermal/Makefile 2019-10-01 09:26:13.000000000 +0300
-++++ b/drivers/thermal/Makefile 2019-03-12 10:34:36.414619070 +0200
++--- a/drivers/thermal/Makefile
+++++ b/drivers/thermal/Makefile
 +@@ -58,6 +58,8 @@
 + obj-$(CONFIG_TEGRA_SOCTHERM)  += tegra/
 + obj-$(CONFIG_HISI_THERMAL)     += hisi_thermal.o
@@ -1716,8 +1716,8 @@
 + obj-$(CONFIG_ZX2967_THERMAL)  += zx2967_thermal.o
 + obj-$(CONFIG_UNIPHIER_THERMAL)    += uniphier_thermal.o
 ++obj-$(CONFIG_SUN8I_THS)       += sun8i_ths.o
-+--- a/drivers/thermal/sun50i_h6_ths.c  1970-01-01 03:00:00.000000000 +0300
-++++ b/drivers/thermal/sun50i_h6_ths.c  2019-03-12 10:34:36.414619070 +0200
++--- a/drivers/thermal/sun50i_h6_ths.c
+++++ b/drivers/thermal/sun50i_h6_ths.c
 +@@ -0,0 +1,365 @@
 ++/*
 ++ * Thermal sensor driver for Allwinner H6
@@ -2084,8 +2084,8 @@
 ++MODULE_AUTHOR("Icenowy Zheng <icenowy@aosc.io>");
 ++MODULE_DESCRIPTION("Thermal sensor driver for Allwinner H6");
 ++MODULE_LICENSE("GPL v2");
-+--- a/drivers/thermal/sun8i_ths.c  1970-01-01 03:00:00.000000000 +0300
-++++ b/drivers/thermal/sun8i_ths.c  2019-03-12 00:33:20.246514437 +0200
++--- a/drivers/thermal/sun8i_ths.c
+++++ b/drivers/thermal/sun8i_ths.c
 +@@ -0,0 +1,416 @@
 ++/*
 ++ * Thermal sensor driver for Allwinner SUN8I SoC
@@ -2503,11 +2503,11 @@
 ++MODULE_AUTHOR("Ondřej Jirman <megous@megous.com>");
 ++MODULE_DESCRIPTION("Thermal sensor driver for Allwinner SUN8I SoCs");
 ++MODULE_LICENSE("GPL v2");
---- a/target/linux/sunxi/patches-4.14/207-add4-sunxi-iio_gpadc_linux.patch  1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/207-add4-sunxi-iio_gpadc_linux.patch  2021-01-22 00:11:49.812136809 +0200
+--- a/target/linux/sunxi/patches-4.14/207-add4-sunxi-iio_gpadc_linux.patch
++++ b/target/linux/sunxi/patches-4.14/207-add4-sunxi-iio_gpadc_linux.patch
 @@ -0,0 +1,90 @@
-+--- a/drivers/iio/adc/sun4i-gpadc-iio.c    2020-01-29 16:02:39.000000000 +0200
-++++ b/drivers/iio/adc/sun4i-gpadc-iio.c    2020-02-01 11:37:12.000000000 +0200
++--- a/drivers/iio/adc/sun4i-gpadc-iio.c
+++++ b/drivers/iio/adc/sun4i-gpadc-iio.c
 +@@ -352,7 +352,6 @@
 + 
 + static const struct iio_info sun4i_gpadc_iio_info = {
@@ -2596,11 +2596,11 @@
 +   ret = devm_iio_device_register(&pdev->dev, indio_dev);
 +   if (ret < 0) {
 +       dev_err(&pdev->dev, "could not register the device\n");
---- a/target/linux/sunxi/patches-4.14/207-add5-sunxi-iio_gpadc_linux.patch  1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/207-add5-sunxi-iio_gpadc_linux.patch  2021-01-22 00:11:49.812136809 +0200
+--- a/target/linux/sunxi/patches-4.14/207-add5-sunxi-iio_gpadc_linux.patch
++++ b/target/linux/sunxi/patches-4.14/207-add5-sunxi-iio_gpadc_linux.patch
 @@ -0,0 +1,824 @@
-+--- a/drivers/iio/adc/sun4i-gpadc-iio.c    2019-10-01 09:26:13.000000000 +0300
-++++ b/drivers/iio/adc/sun4i-gpadc-iio.c    2019-03-12 10:34:30.642789776 +0200
++--- a/drivers/iio/adc/sun4i-gpadc-iio.c
+++++ b/drivers/iio/adc/sun4i-gpadc-iio.c
 +@@ -22,15 +22,18 @@
 +  * shutdown for not being used.
 +  */
@@ -3316,8 +3316,8 @@
 +   return 0;
 + }
 + 
-+--- a/drivers/iio/adc/Kconfig  2019-10-01 09:26:13.000000000 +0300
-++++ b/drivers/iio/adc/Kconfig  2019-03-12 10:34:30.454795338 +0200
++--- a/drivers/iio/adc/Kconfig
+++++ b/drivers/iio/adc/Kconfig
 +@@ -674,7 +700,7 @@
 + config SUN4I_GPADC
 +   tristate "Support for the Allwinner SoCs GPADC"
@@ -3327,8 +3327,8 @@
 +   depends on THERMAL || !THERMAL_OF
 +   help
 +     Say yes here to build support for Allwinner (A10, A13 and A31) SoCs
-+--- a/include/linux/mfd/sun4i-gpadc.h  2019-10-01 09:26:13.000000000 +0300
-++++ b/include/linux/mfd/sun4i-gpadc.h  2019-03-12 10:34:30.334798888 +0200
++--- a/include/linux/mfd/sun4i-gpadc.h
+++++ b/include/linux/mfd/sun4i-gpadc.h
 +@@ -17,7 +17,6 @@
 + #define SUN4I_GPADC_CTRL0_ADC_CLK_SELECT      BIT(22)
 + #define SUN4I_GPADC_CTRL0_ADC_CLK_DIVIDER(x)      ((GENMASK(1, 0) & (x)) << 20)
@@ -3423,8 +3423,8 @@
 + struct sun4i_gpadc_dev {
 +   struct device           *dev;
 +   struct regmap           *regmap;
---- a/target/linux/sunxi/patches-4.14/208-add-vdd-cpux-regulator-opi-zero.patch 1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/208-add-vdd-cpux-regulator-opi-zero.patch 2021-01-22 00:11:49.812136809 +0200
+--- a/target/linux/sunxi/patches-4.14/208-add-vdd-cpux-regulator-opi-zero.patch
++++ b/target/linux/sunxi/patches-4.14/208-add-vdd-cpux-regulator-opi-zero.patch
 @@ -0,0 +1,26 @@
 +--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
 ++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
@@ -3452,8 +3452,8 @@
 + 
 +   wifi_pwrseq: wifi_pwrseq {
 +       compatible = "mmc-pwrseq-simple";
---- a/target/linux/sunxi/patches-4.14/209-dts-add-orangepi-zero-lts.patch   1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/209-dts-add-orangepi-zero-lts.patch   2021-01-22 00:11:49.812136809 +0200
+--- a/target/linux/sunxi/patches-4.14/209-dts-add-orangepi-zero-lts.patch
++++ b/target/linux/sunxi/patches-4.14/209-dts-add-orangepi-zero-lts.patch
 @@ -0,0 +1,70 @@
 +--- a/arch/arm/boot/dts/Makefile
 ++++ b/arch/arm/boot/dts/Makefile
@@ -3525,11 +3525,11 @@
 ++&cpu_very_hot_trip {
 ++  temperature = <45000>; /* ~90°C */
 ++};
---- a/target/linux/sunxi/patches-4.14/210-add-spdif-PA17-red_led-opi-zero.patch 1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/210-add-spdif-PA17-red_led-opi-zero.patch 2021-01-22 00:11:49.812136809 +0200
+--- a/target/linux/sunxi/patches-4.14/210-add-spdif-PA17-red_led-opi-zero.patch
++++ b/target/linux/sunxi/patches-4.14/210-add-spdif-PA17-red_led-opi-zero.patch
 @@ -0,0 +1,40 @@
-+--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts    2020-01-29 16:02:39.000000000 +0200
-++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts    2020-02-01 11:37:12.000000000 +0200
++--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
+++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
 +@@ -125,6 +150,24 @@
 +       reset-gpios = <&r_pio 0 7 GPIO_ACTIVE_LOW>;
 +       post-power-on-delay-ms = <200>;
@@ -3568,11 +3568,11 @@
 + 
 + &usb_otg {
 +   dr_mode = "peripheral";
---- a/target/linux/sunxi/patches-4.14/211-add-button-opi-zero.patch 1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/211-add-button-opi-zero.patch 2021-01-22 00:11:49.812136809 +0200
+--- a/target/linux/sunxi/patches-4.14/211-add-button-opi-zero.patch
++++ b/target/linux/sunxi/patches-4.14/211-add-button-opi-zero.patch
 @@ -0,0 +1,109 @@
-+--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts    2020-01-29 16:02:39.000000000 +0200
-++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts    2020-02-01 11:37:12.000000000 +0200
++--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
+++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
 +@@ -156,6 +170,76 @@
 +           #thermal-sensor-cells = <0>;
 +       };
@@ -3680,8 +3680,8 @@
 + };
 + 
 + &pwm {
---- a/target/linux/sunxi/image/cortex-a7.mk 2021-03-02 21:21:50.746649436 +0200
-+++ b/target/linux/sunxi/image/cortex-a7.mk 2021-02-09 23:50:06.681229639 +0200
+--- a/target/linux/sunxi/image/cortex-a7.mk
++++ b/target/linux/sunxi/image/cortex-a7.mk
 @@ -8,6 +8,18 @@
  
  ifeq ($(SUBTARGET),cortexa7)
@@ -3770,8 +3770,8 @@
    SUPPORTED_DEVICES:=xunlong,orangepi-r1
    SUNXI_DTS:=sun8i-h2-plus-orangepi-r1
  endef
---- a/target/linux/sunxi/base-files/etc/rc.local    1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/base-files/etc/rc.local    2021-01-22 00:11:49.812136809 +0200
+--- a/target/linux/sunxi/base-files/etc/rc.local
++++ b/target/linux/sunxi/base-files/etc/rc.local
 @@ -0,0 +1,7 @@
 +# Put your custom commands here that should be executed once
 +# the system init finished. By default this file does nothing.
@@ -3780,8 +3780,8 @@
 +amixer -c 0 -q set "DAC" 100%+ unmute &
 +
 +exit 0
---- a/package/boot/uboot-sunxi/patches/001-add-orangepi-zero-lts.patch  1970-01-01 03:00:00.000000000 +0300
-+++ b/package/boot/uboot-sunxi/patches/001-add-orangepi-zero-lts.patch  2021-02-10 00:43:51.906733867 +0200
+--- a/package/boot/uboot-sunxi/patches/001-add-orangepi-zero-lts.patch
++++ b/package/boot/uboot-sunxi/patches/001-add-orangepi-zero-lts.patch
 @@ -0,0 +1,163 @@
 +--- a/include/spi.h
 ++++ b/include/spi.h
@@ -3794,8 +3794,8 @@
 + 
 + /* SPI mode flags */
 + #define SPI_CPHA  BIT(0)          /* clock phase */
-+--- a/include/configs/sun8i.h  2020-04-13 18:02:18.000000000 +0300
-++++ b/include/configs/sun8i.h  2020-04-27 13:18:42.645124351 +0300
++--- a/include/configs/sun8i.h
+++++ b/include/configs/sun8i.h
 +@@ -16,6 +22,14 @@
 + #define CONFIG_USB_EHCI_SUNXI
 + #endif
@@ -3811,8 +3811,8 @@
 + /*
 +  * Include common sunxi configuration where most the settings are
 +  */
-+--- a/arch/arm/dts/sun8i-h2-plus-orangepi-zero.dts 2020-04-13 18:02:18.000000000 +0300
-++++ b/arch/arm/dts/sun8i-h2-plus-orangepi-zero.dts 2020-04-27 13:21:09.376776939 +0300
++--- a/arch/arm/dts/sun8i-h2-plus-orangepi-zero.dts
+++++ b/arch/arm/dts/sun8i-h2-plus-orangepi-zero.dts
 +@@ -59,6 +59,7 @@
 +       /* ethernet0 is the H3 emac, defined in sun8i-h3.dtsi */
 +       ethernet0 = &emac;
@@ -3859,8 +3859,8 @@
 +   };
 + };
 + 
-+--- a/configs/orangepi_zero_defconfig  2020-04-13 18:02:18.000000000 +0300
-++++ b/configs/orangepi_zero_defconfig  2020-04-26 23:25:47.021081652 +0300
++--- a/configs/orangepi_zero_defconfig
+++++ b/configs/orangepi_zero_defconfig
 +@@ -15,3 +15,16 @@
 + CONFIG_SUN8I_EMAC=y
 + CONFIG_USB_EHCI_HCD=y
@@ -3878,8 +3878,8 @@
 ++CONFIG_SPI_FLASH_MTD=y
 ++CONFIG_SPI_FLASH_WINBOND=y
 ++CONFIG_SPI_FLASH_MACRONIX=y
-+--- a/arch/arm/dts/Makefile    2019-01-15 00:02:36.000000000 +0200
-++++ b/arch/arm/dts/Makefile    2019-05-03 17:50:22.000000000 +0300
++--- a/arch/arm/dts/Makefile
+++++ b/arch/arm/dts/Makefile
 +@@ -376,6 +376,7 @@
 +   sun8i-h2-plus-libretech-all-h3-cc.dtb \
 +   sun8i-h2-plus-orangepi-r1.dtb \
@@ -3931,8 +3931,8 @@
 ++CONFIG_SPI_FLASH_MTD=y
 ++CONFIG_SPI_FLASH_WINBOND=y
 ++CONFIG_SPI_FLASH_MACRONIX=y
-+--- a/board/sunxi/MAINTAINERS  2019-01-15 00:02:36.000000000 +0200
-++++ b/board/sunxi/MAINTAINERS  2019-05-03 17:50:22.000000000 +0300
++--- a/board/sunxi/MAINTAINERS
+++++ b/board/sunxi/MAINTAINERS
 +@@ -355,6 +355,12 @@
 + S:    Maintained
 + F:    configs/orangepi_zero_defconfig
@@ -3946,8 +3946,8 @@
 + ORANGEPI ZERO PLUS BOARD
 + M:    Hauke Mehrtens <hauke@hauke-m.de>
 + S:    Maintained
---- a/package/boot/uboot-sunxi/Makefile 2021-03-02 21:21:49.554680340 +0200
-+++ b/package/boot/uboot-sunxi/Makefile 2021-02-10 00:18:56.314879729 +0200
+--- a/package/boot/uboot-sunxi/Makefile
++++ b/package/boot/uboot-sunxi/Makefile
 @@ -156,6 +156,12 @@
    BUILD_DEVICES:=sun8i-h2-plus-orangepi-zero
  endef
@@ -3969,8 +3969,8 @@
     orangepi_r1 \
     orangepi_one \
     orangepi_pc \
---- a/package/kernel/mac80211/files/lib/wifi/mac80211.sh    2021-03-02 21:21:49.650677851 +0200
-+++ b/package/kernel/mac80211/files/lib/wifi/mac80211.sh    2021-01-22 00:11:49.812136809 +0200
+--- a/package/kernel/mac80211/files/lib/wifi/mac80211.sh
++++ b/package/kernel/mac80211/files/lib/wifi/mac80211.sh
 @@ -1,5 +1,8 @@
  #!/bin/sh
  append DRIVERS "mac80211"
@@ -4010,8 +4010,8 @@
  
         devidx=$(($devidx + 1))
     done
---- a/package/base-files/files/bin/config_generate  2021-03-02 21:21:49.482682206 +0200
-+++ b/package/base-files/files/bin/config_generate  2021-01-22 00:11:49.812136809 +0200
+--- a/package/base-files/files/bin/config_generate
++++ b/package/base-files/files/bin/config_generate
 @@ -3,6 +3,9 @@
  CFG=/etc/board.json
  
@@ -4055,8 +4055,8 @@
             fi
  
             if json_is_a ntpserver array; then
---- a/package/base-files/image-config.in    2021-03-02 21:21:49.498681791 +0200
-+++ b/package/base-files/image-config.in    2021-01-22 00:11:49.812136809 +0200
+--- a/package/base-files/image-config.in
++++ b/package/base-files/image-config.in
 @@ -76,7 +76,7 @@
  config TARGET_PREINIT_IP
     string
@@ -4084,8 +4084,8 @@
         help
             Enable this to include the revision identifier or the configured
             version code into the firmware image, SDK- and Image Builder archive
---- a/package/base-files/Makefile   2021-03-02 21:21:49.482682206 +0200
-+++ b/package/base-files/Makefile   2021-01-22 00:11:49.812136809 +0200
+--- a/package/base-files/Makefile
++++ b/package/base-files/Makefile
 @@ -81,9 +81,9 @@
     echo 'pi_init_cmd=$(if $(CONFIG_TARGET_INIT_CMD),$(CONFIG_TARGET_INIT_CMD),"/sbin/init")' >>$(1)/lib/preinit/00_preinit.conf
     echo 'pi_init_suppress_stderr="$(CONFIG_TARGET_INIT_SUPPRESS_STDERR)"' >>$(1)/lib/preinit/00_preinit.conf
@@ -4098,8 +4098,8 @@
     echo 'pi_preinit_net_messages="$(CONFIG_TARGET_PREINIT_SHOW_NETMSG)"' >>$(1)/lib/preinit/00_preinit.conf
     echo 'pi_preinit_no_failsafe_netmsg="$(CONFIG_TARGET_PREINIT_SUPPRESS_FAILSAFE_NETMSG)"' >>$(1)/lib/preinit/00_preinit.conf
     echo 'pi_preinit_no_failsafe="$(CONFIG_TARGET_PREINIT_DISABLE_FAILSAFE)"' >>$(1)/lib/preinit/00_preinit.conf
---- a/target/linux/sunxi/patches-4.14/212-add-spi-flash-opi-zero.patch  1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/212-add-spi-flash-opi-zero.patch  2021-01-22 00:11:49.816136702 +0200
+--- a/target/linux/sunxi/patches-4.14/212-add-spi-flash-opi-zero.patch
++++ b/target/linux/sunxi/patches-4.14/212-add-spi-flash-opi-zero.patch
 @@ -0,0 +1,48 @@
 +--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
 ++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
@@ -4149,8 +4149,8 @@
 +   };
 + };
 + 
---- a/target/linux/sunxi/patches-4.14/213-add-i2c-opi-zero.patch    1970-01-01 03:00:00.000000000 +0300
-+++ b/target/linux/sunxi/patches-4.14/213-add-i2c-opi-zero.patch    2021-01-22 00:11:49.816136702 +0200
+--- a/target/linux/sunxi/patches-4.14/213-add-i2c-opi-zero.patch
++++ b/target/linux/sunxi/patches-4.14/213-add-i2c-opi-zero.patch
 @@ -0,0 +1,11 @@
 +--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
 ++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-zero.dts
@@ -4163,18 +4163,18 @@
 +   };
 + 
 +   chosen {
---- a/feeds/packages/utils/triggerhappy/patches/001-add_REL-ABS-devices.patch   1970-01-01 03:00:00.000000000 +0300
-+++ b/feeds/packages/utils/triggerhappy/patches/001-add_REL-ABS-devices.patch   2021-02-28 11:11:04.490962000 +0200
+--- a/feeds/packages/utils/triggerhappy/patches/001-add_REL-ABS-devices.patch
++++ b/feeds/packages/utils/triggerhappy/patches/001-add_REL-ABS-devices.patch
 @@ -0,0 +1,12 @@
 +--- a/devices.c
 ++++ b/devices.c
 +@@ -45,7 +45,8 @@
-+   int rc = ioctl(fd, EVIOCGBIT(0,sizeof(bits)), bits);
-+   return rc > 0 && (
-+       /* we only consider devices with keys or switches suitable */
-+-      test_bit(EV_KEY, bits) || test_bit(EV_SW, bits)
-++      test_bit(EV_KEY, bits) || test_bit(EV_SW, bits) ||
-++      test_bit(EV_REL, bits) || test_bit(EV_ABS, bits)
-+   );
++  int rc = ioctl(fd, EVIOCGBIT(0,sizeof(bits)), bits);
++  return rc > 0 && (
++     /* we only consider devices with keys or switches suitable */
++-    test_bit(EV_KEY, bits) || test_bit(EV_SW, bits)
+++    test_bit(EV_KEY, bits) || test_bit(EV_SW, bits) ||
+++    test_bit(EV_REL, bits) || test_bit(EV_ABS, bits)
++  );
 + }
 + 
