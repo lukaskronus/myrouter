@@ -7,7 +7,6 @@ on:
   workflow_dispatch:
 
 env:
-  #REPO_URL: https://github.com/immortalwrt/immortalwrt
   REPO_URL: https://github.com/openwrt/openwrt
   REPO_BRANCH: v21.02.7
   CONFIG_FILE: config/orangepi-r1.config
@@ -43,6 +42,8 @@ jobs:
       run: |
         patch -p1 < "${GITHUB_WORKSPACE}/diy/orangepi-r1/All-openwrt-21.02.patch"
         sed -i '$a src-git opicyberwrt https://github.com/lukaskronus/opi-r1-cyberwrt' feeds.conf.default
+        git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
+        git clone -b luci2 https://github.com/bi7prk/luci-app-xray.git ./package/luci-app-xray
         scripts/feeds update -a && scripts/feeds install -a
     
     - name: Cache OpenWRT
