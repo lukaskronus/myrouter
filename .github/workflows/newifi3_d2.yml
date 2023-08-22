@@ -3,20 +3,20 @@ name: Build Newifi3 D2
 on:
   push:
     paths:
-      - 'config/newifi3.config'
+      - 'config/newifi3_d2.config'
   # schedule:
   #   - cron: '0 0 * * 6'
   workflow_dispatch:
 
 env:
-  CONFIG_FILE: config/newifi3.config
+  CONFIG_FILE: config/newifi3_d2.config
   DIY_01: diy/01_resource.sh
   DIY_02: diy/02_packages.sh
   DIY_03: diy/03_mt7621.sh
 
 jobs:
   compile:
-    name: 📶ImmortalWRT📶
+    name: 📶NEWIFI D2📶
     runs-on: ubuntu-20.04
 
     steps:
@@ -98,14 +98,14 @@ jobs:
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
     
-    - name: Upload to transfer.sh
-      id: upload
-      if: steps.organize.outputs.status == 'success' && !cancelled()
+    - name: Upload to 3rd-party firmware
+      if: steps.compile.outputs.status == 'success' && !cancelled()
       run: |
+        zip -rj newifi3d2.zip $FIRMWARE
         curl -sL https://git.io/file-transfer | sh
-        ./transfer trs --no-progress --no-progress ${FIRMWARE} 2>&1 | tee trs.log
-        echo "::notice file=transfer.com::$(cat trs.log | grep https | grep sysupgrade)"
-        echo "url=$(cat trs.log | grep https | grep sysupgrade | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+        ./transfer trs --no-progress ./newifi3d2.zip 2>&1 | tee trs.log
+        echo "::notice file=transfer.sh::$(cat trs.log | grep https)"
+        echo "url=$(cat trs.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
 
     - name: Telegram notification
       if: steps.organize.outputs.status == 'success' && !cancelled()
