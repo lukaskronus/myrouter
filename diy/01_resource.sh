@@ -2,8 +2,8 @@
 
 # Clone source code
 # latest_release="$(curl -s https://github.com/immortalwrt/immortalwrt/tags | grep -Eo "v[0-9\.]+\-*r*c*[0-9]*.tar.gz" | sed -n '/[2-9][0-9]/p' | sed -n 1p | sed 's/.tar.gz//g')"
-git clone --single-branch -b v21.02.6 https://github.com/immortalwrt/immortalwrt.git immortalwrt_release
-git clone --single-branch -b openwrt-21.02 https://github.com/immortalwrt/immortalwrt.git immortalwrt
+git clone --single-branch --filter=blob:none -b v21.02.6 https://github.com/immortalwrt/immortalwrt.git immortalwrt_release
+git clone --single-branch --filter=blob:none -b openwrt-21.02 https://github.com/immortalwrt/immortalwrt.git immortalwrt
 rm -f ./immortalwrt/include/version.mk
 rm -f ./immortalwrt/include/kernel.mk
 rm -f ./immortalwrt/include/kernel-5.4
