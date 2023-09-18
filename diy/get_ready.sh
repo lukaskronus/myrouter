@@ -20,6 +20,6 @@ git clone -b master --depth 1 --filter=blob:none https://github.com/openwrt/luci
 
 # Clone patches
 git clone https://github.com/nicholas-opensource/OpenWrt-Autobuild
-cp -r OpenWrt-Autobuild/PATCH/. ./
+cp -r OpenWrt-Autobuild/PATCH/. ./PATCH
 
 exit 0
