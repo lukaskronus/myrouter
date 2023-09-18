@@ -31,6 +31,7 @@ cp -rf ./openwrt_release/target/linux/* ./openwrt/target/linux/
 cp -rf ./openwrt_release/package/kernel/linux/* ./openwrt/package/kernel/linux/
 
 # Clone patches
+git clone -b master --depth 1 https://github.com/openwrt/packages.git openwrt_pkg_ma
 git clone https://github.com/nicholas-opensource/OpenWrt-Autobuild
 cp -r OpenWrt-Autobuild/PATCH/. ./PATCH
 
