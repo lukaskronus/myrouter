@@ -29,9 +29,6 @@ cp -rf ../PATCH/BBRv3/kernel/* ./target/linux/generic/backport-5.15/
 # Golang
 rm -rf ./feeds/packages/lang/golang
 cp -rf ../openwrt_pkg_ma/lang/golang ./feeds/packages/lang/golang
-# Ram-free
-cp -rf ../immortalwrt_luci/applications/luci-app-ramfree ./feeds/luci/applications/luci-app-ramfree
-ln -sf ../../../feeds/luci/applications/luci-app-ramfree ./package/feeds/luci/luci-app-ramfree
 # Conntrack_Max
 wget -qO - https://github.com/openwrt/openwrt/commit/bbf39d07.patch | patch -p1
 
