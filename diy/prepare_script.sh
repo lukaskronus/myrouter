@@ -33,12 +33,6 @@ echo "# CONFIG_SHORTCUT_FE is not set" >> target/linux/generic/config-5.15
 ./scripts/feeds update -a && ./scripts/feeds install -a
 
 ## Patching
-#Generic patches
-svn co https://github.com/coolsnowwolf/lede/trunk/target/linux/generic/hack-5.15 target/linux/generic/hack-5.15
-svn co https://github.com/coolsnowwolf/lede/trunk/target/linux/generic/backport-5.15 target/linux/generic/backport-5.15
-find target/linux/generic/backport-5.15 -name "[0-9][0-9][0-9]-[a-z][a-z]*" -exec rm -f {} \;
-rm -rf target/linux/generic/backport-5.15/{799-v6.0-net-mii*,802-v6.1-nvmem*,803-v5.19-nvmem*,733-v6.2-02-net-mediatek-sgmii-ensure*,733-v6.2-03-net-mediatek*,733-v6.2-04-mtk_sgmii-enable*,775-v5.16-net-phylink*,776-v5.16-net-ethernet-*,890-v6.1-mtd-spinand-winbond*,891-v6.1-mtd-spinand-winbond*}
-curl -sfL https://raw.githubusercontent.com/coolsnowwolf/lede/master/target/linux/generic/pending-5.15/613-netfilter_optional_tcp_window_check.patch -o target/linux/generic/pending-5.15/613-netfilter_optional_tcp_window_check.patch
 # MT76 patches
 grep -q "23.05" include/version.mk && [ -d package/kernel/mt76 ] && {
 mkdir package/kernel/mt76/patches
@@ -56,8 +50,6 @@ rm -rf ./package/libs/mbedtls
 cp -rf ../immortalwrt/package/libs/mbedtls ./package/libs/mbedtls
 # Fix fstools
 wget -qO - https://github.com/coolsnowwolf/lede/commit/8a4db76.patch | patch -p1
-# BBRv3
-svn co https://github.com/nicholas-opensource/OpenWrt-Autobuild/trunk/PATCH/BBRv3/kernel ./target/linux/generic/backport-5.15/
 # Conntrack_Max
 wget -qO - https://github.com/openwrt/openwrt/commit/bbf39d07.patch | patch -p1
 
