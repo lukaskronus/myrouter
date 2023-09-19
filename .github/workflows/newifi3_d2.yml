@@ -105,6 +105,7 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
     
     - name: Upload to 3rd-party firmware
+      id: upload
       if: steps.compile.outputs.status == 'success' && !cancelled()
       run: |
         zip -rj newifi3d2.zip $FIRMWARE
