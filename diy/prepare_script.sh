@@ -1,9 +1,7 @@
 #!/bin/bash
-clear
+shopt -s extglob
 
 ## Prepare
-# GCC CFlags
-sed -i 's/Os/O2/g' include/target.mk
 # Add personal packages
 git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git ./package/luci-app-dnsproxy
 git clone -b luci2 https://github.com/lukaskronus/luci-proto-batman-adv.git ./package/luci-proto-batman-adv
@@ -30,8 +28,22 @@ cp -RT ./turboacc_tmp/turboacc/nftables-$(grep -o 'NFTABLES_VERSION=.*' ./turboa
 rm -rf turboacc_tmp
 echo "# CONFIG_NF_CONNTRACK_CHAIN_EVENTS is not set" >> target/linux/generic/config-5.15
 echo "# CONFIG_SHORTCUT_FE is not set" >> target/linux/generic/config-5.15
-# Update feeds
+
+## Update feeds
 ./scripts/feeds update -a && ./scripts/feeds install -a
+
+## Patching
+#Generic patches
+svn co https://github.com/coolsnowwolf/lede/trunk/target/linux/generic/hack-5.15 target/linux/generic/hack-5.15
+svn co https://github.com/coolsnowwolf/lede/trunk/target/linux/generic/backport-5.15 target/linux/generic/backport-5.15
+find target/linux/generic/backport-5.15 -name "[0-9][0-9][0-9]-[a-z][a-z]*" -exec rm -f {} \;
+rm -rf target/linux/generic/backport-5.15/{799-v6.0-net-mii*,802-v6.1-nvmem*,803-v5.19-nvmem*,733-v6.2-02-net-mediatek-sgmii-ensure*,733-v6.2-03-net-mediatek*,733-v6.2-04-mtk_sgmii-enable*,775-v5.16-net-phylink*,776-v5.16-net-ethernet-*,890-v6.1-mtd-spinand-winbond*,891-v6.1-mtd-spinand-winbond*}
+curl -sfL https://raw.githubusercontent.com/coolsnowwolf/lede/master/target/linux/generic/pending-5.15/613-netfilter_optional_tcp_window_check.patch -o target/linux/generic/pending-5.15/613-netfilter_optional_tcp_window_check.patch
+# MT76 patches
+grep -q "23.05" include/version.mk && [ -d package/kernel/mt76 ] && {
+mkdir package/kernel/mt76/patches
+curl -sfL https://raw.githubusercontent.com/immortalwrt/immortalwrt/master/package/kernel/mt76/patches/0001-mt76-allow-VHT-rate-on-2.4GHz.patch -o package/kernel/mt76/patches/0001-mt76-allow-VHT-rate-on-2.4GHz.patch
+} || rm -rf devices/common/patches/mt7922.patch
 # Irqbalance
 sed -i "s/enabled '0'/enabled '1'/g" feeds/packages/utils/irqbalance/files/irqbalance.config
 # Victoria's secret
@@ -45,12 +57,7 @@ cp -rf ../immortalwrt/package/libs/mbedtls ./package/libs/mbedtls
 # Fix fstools
 wget -qO - https://github.com/coolsnowwolf/lede/commit/8a4db76.patch | patch -p1
 # BBRv3
-cp -rf ../PATCH/BBRv3/kernel/* ./target/linux/generic/backport-5.15/
-
-## Extra Packages
-# Golang
-rm -rf ./feeds/packages/lang/golang
-cp -rf ../openwrt_pkg_ma/lang/golang ./feeds/packages/lang/golang
+svn co https://github.com/nicholas-opensource/OpenWrt-Autobuild/trunk/PATCH/BBRv3/kernel ./target/linux/generic/backport-5.15/
 # Conntrack_Max
 wget -qO - https://github.com/openwrt/openwrt/commit/bbf39d07.patch | patch -p1
 
@@ -58,3 +65,8 @@ wget -qO - https://github.com/openwrt/openwrt/commit/bbf39d07.patch | patch -p1
 # My modificaions
 sed -i 's/192.168.1.1/192.168.41.1/g' package/base-files/files/bin/config_generate
 sed -i 's/ImmortalWrt/AkiKiiro/g' package/base-files/files/bin/config_generate
+# Vermagic
+latest_release="$(curl -s https://api.github.com/repos/openwrt/openwrt/tags | grep -Eo "v23.05.+[0-9\.]" | head -n 1 | sed 's/v//g')"
+wget https://downloads.openwrt.org/releases/${latest_release}/targets/ramips/mt7621/packages/Packages.gz
+zgrep -m 1 "Depends: kernel (=.*)$" Packages.gz | sed -e 's/.*-\(.*\))/\1/' >.vermagic
+sed -i -e 's/^\(.\).*vermagic$/\1cp $(TOPDIR)\/.vermagic $(LINUX_DIR)\/.vermagic/' include/kernel-defaults.mk
