@@ -10,6 +10,7 @@ on:
 
 env:
   CONFIG_FILE: config/archer_c6.config
+  REPO_BRANCH: v23.05.0-rc3
 
 jobs:
   compile:
@@ -41,7 +42,7 @@ jobs:
     - name: Clone source code
       run: |
         df -hT $PWD
-        git clone $REPO_URL -b $REPO_BRANCH --single-branch --filter=blob:none openwrt
+        git clone https://github.com/openwrt/openwrt.git -b $REPO_BRANCH --single-branch --filter=blob:none openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
       
     - name: Cache OpenWRT
