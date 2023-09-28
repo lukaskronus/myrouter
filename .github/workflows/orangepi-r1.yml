@@ -43,7 +43,7 @@ jobs:
         patch -p1 < "${GITHUB_WORKSPACE}/diy/orangepi-r1/All-openwrt-21.02.patch"
         sed -i '$a src-git opicyberwrt https://github.com/lukaskronus/opi-r1-cyberwrt' feeds.conf.default
         git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
-        git clone -b luci2 https://github.com/bi7prk/luci-app-xray.git ./package/luci-app-xray
+        git clone https://github.com/rafmilecki/luci-app-xjay.git ./package/luci-app-xjay
         scripts/feeds update -a && scripts/feeds install -a
     
     - name: Cache OpenWRT
