@@ -6,6 +6,7 @@ shopt -s extglob
 git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git ./package/luci-app-dnsproxy
 git clone -b luci2 https://github.com/lukaskronus/luci-proto-batman-adv.git ./package/luci-proto-batman-adv
 git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
+git clone https://github.com/rafmilecki/luci-app-xjay.git ./package/luci-app-xjay
 # Add turboacc packages
 mkdir -p turboacc_tmp ./package/turboacc
 cd turboacc_tmp 
