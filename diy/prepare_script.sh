@@ -4,7 +4,7 @@ shopt -s extglob
 ## Prepare
 # Add personal packages
 git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git ./package/luci-app-dnsproxy
-git clone -b luci2 https://github.com/lukaskronus/luci-proto-batman-adv.git ./package/luci-proto-batman-adv
+#git clone -b luci2 https://github.com/lukaskronus/luci-proto-batman-adv.git ./package/luci-proto-batman-adv
 git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
 git clone https://github.com/rafmilecki/luci-app-xjay.git ./package/luci-app-xjay
 # Add turboacc packages
@@ -18,8 +18,6 @@ mv ./turboacc/luci-app-turboacc ./luci-app-turboacc
 rm -rf ./turboacc
 cd ../..
 cp -f turboacc_tmp/turboacc/hack-5.15/952-add-net-conntrack-events-support-multiple-registrant.patch ./target/linux/generic/hack-5.15/952-add-net-conntrack-events-support-multiple-registrant.patch
-cp -f turboacc_tmp/turboacc/hack-5.15/953-net-patch-linux-kernel-to-support-shortcut-fe.patch ./target/linux/generic/hack-5.15/953-net-patch-linux-kernel-to-support-shortcut-fe.patch
-cp -f turboacc_tmp/turboacc/pending-5.15/613-netfilter_optional_tcp_window_check.patch ./target/linux/generic/pending-5.15/613-netfilter_optional_tcp_window_check.patch
 rm -rf ./package/libs/libnftnl ./package/network/config/firewall4 ./package/network/utils/nftables
 mkdir -p ./package/network/config/firewall4 ./package/libs/libnftnl ./package/network/utils/nftables
 cp -r ./turboacc_tmp/turboacc/shortcut-fe ./package/turboacc
@@ -41,23 +39,11 @@ curl -sfL https://raw.githubusercontent.com/immortalwrt/immortalwrt/master/packa
 } || rm -rf devices/common/patches/mt7922.patch
 # Irqbalance
 sed -i "s/enabled '0'/enabled '1'/g" feeds/packages/utils/irqbalance/files/irqbalance.config
-# Victoria's secret
-echo "net.netfilter.nf_conntrack_helper = 1" >>./package/kernel/linux/files/sysctl-nf-conntrack.conf
-sed -i 's/default NODEJS_ICU_SMALL/default NODEJS_ICU_NONE/g' feeds/packages/lang/node/Makefile
-
-## Important Patches
-# Patches for SSL
-rm -rf ./package/libs/mbedtls
-cp -rf ../immortalwrt/package/libs/mbedtls ./package/libs/mbedtls
-# Fix fstools
-wget -qO - https://github.com/coolsnowwolf/lede/commit/8a4db76.patch | patch -p1
-# Conntrack_Max
-wget -qO - https://github.com/openwrt/openwrt/commit/bbf39d07.patch | patch -p1
 
 ## Ending
 # My modificaions
 sed -i 's/192.168.1.1/192.168.41.1/g' package/base-files/files/bin/config_generate
-sed -i 's/ImmortalWrt/AkiKiiro/g' package/base-files/files/bin/config_generate
+sed -i 's/OpenWRT/AkiKiiro/g' package/base-files/files/bin/config_generate
 # Vermagic
 latest_release="$(curl -s https://api.github.com/repos/openwrt/openwrt/tags | grep -Eo "v23.05.+[0-9\.]" | head -n 1 | sed 's/v//g')"
 wget https://downloads.openwrt.org/releases/${latest_release}/targets/ramips/mt7621/packages/Packages.gz

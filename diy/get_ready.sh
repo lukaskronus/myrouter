@@ -6,7 +6,7 @@ git clone --single-branch --filter=blob:none -b ${latest_release} https://github
 git clone --single-branch --filter=blob:none -b openwrt-23.05 https://github.com/openwrt/openwrt openwrt
 
 # Clone packages
-git clone -b master --depth 1 --filter=blob:none https://github.com/immortalwrt/immortalwrt.git immortalwrt
+#git clone -b master --depth 1 --filter=blob:none https://github.com/immortalwrt/immortalwrt.git immortalwrt
 
 # Move stable to snapshot
 rm -f ./openwrt/include/version.mk
