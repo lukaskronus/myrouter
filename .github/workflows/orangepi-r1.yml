@@ -44,6 +44,7 @@ jobs:
         sed -i '$a src-git opicyberwrt https://github.com/lukaskronus/opi-r1-cyberwrt' feeds.conf.default
         git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
         git clone https://github.com/rafmilecki/luci-app-xjay.git ./package/luci-app-xjay
+        cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/0001-sunxi-add-dts-for-USB-in-OrangePi-R1-expansion-board.patch" ./target/linux/sunxi/patches-5.4/
         scripts/feeds update -a && scripts/feeds install -a
     
     - name: Cache OpenWRT
