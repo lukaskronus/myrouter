@@ -16,9 +16,9 @@ on:
 jobs:
   compile:
     name: 📶NEWIFI D2📶
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
-  steps:
+    steps:
     - name: Clone Repository
       uses: actions/checkout@main
 
