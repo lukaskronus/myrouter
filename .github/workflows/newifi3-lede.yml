@@ -32,9 +32,13 @@ jobs:
         sudo rm -rf /var/lib/docker
         sudo rm -rf /usr/share/dotnet
         sudo rm -rf /opt/hostedtoolcache/go /opt/hostedtoolcache/Ruby /opt/hostedtoolcache/node
+        sudo -E git config --global core.abbrev auto
 
         sudo apt-get -qq autoremove --purge
         sudo apt-get -qq clean
+
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
 
     - name: Clone source code
       run: |
