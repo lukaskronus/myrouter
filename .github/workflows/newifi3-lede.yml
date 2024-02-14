@@ -2,53 +2,48 @@ name: Newifi3-LEDE
 
 env:
   TZ: Asia/Ho_Chi_Minh
+  CONFIG_FILE: config/newifi3_lede.config
 
 on:
   push:
     paths:
       - 'config/newifi3_lede.config'
   workflow_dispatch:
-  schedule:
+  # schedule:
     # * is a special character in YAML, so you have to quote this string
     # - cron: '0 18 * * 0,2,4,5,6'
 
 jobs:
-  build:
+  compile:
+    name: 📶NEWIFI D2📶
     runs-on: ubuntu-latest
 
   steps:
-      - name: Clone Repository
-        uses: actions/checkout@v3
+    - name: Clone Repository
+      uses: actions/checkout@main
 
-      - name: Build Environment Initialization
-        run: |
-          sudo apt-get update
-          sudo apt-get -qq remove --purge mysql* php* google* firefox ghc azure-cli \
-            dotnet* powershell ruby-full zulu* llvm*
-          sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
-            bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib \
-            git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev \
-            libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz \
-            mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools \
-            libpython3-dev qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip \
-            vim wget xmlto xxd zlib1g-dev
+    - name: Build Environment Initialization
+      run: |
+        sudo apt-get update
+        sudo apt-get -qq remove --purge mysql* php* google* firefox ghc azure-cli dotnet* powershell ruby-full zulu* llvm*
+        sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools libpython3-dev qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
           
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /var/lib/docker
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/hostedtoolcache/go /opt/hostedtoolcache/Ruby /opt/hostedtoolcache/node
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /var/lib/docker
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/hostedtoolcache/go /opt/hostedtoolcache/Ruby /opt/hostedtoolcache/node
 
-          sudo apt-get -qq autoremove --purge
-          sudo apt-get -qq clean
+        sudo apt-get -qq autoremove --purge
+        sudo apt-get -qq clean
 
-      - name: Clone source code
-        run: |
-          df -hT $PWD
-          cd /workdir
-          git clone https://github.com/coolsnowwolf/lede.git --single-branch --filter=blob:none          
-          ln -sf /workdir/lede $GITHUB_WORKSPACE/lede
+    - name: Clone source code
+      run: |
+        df -hT $PWD
+        cd /workdir
+        git clone https://github.com/coolsnowwolf/lede.git --single-branch --filter=blob:none          
+        ln -sf /workdir/lede $GITHUB_WORKSPACE/lede
 
-      - name: Prepare packages
+    - name: Prepare packages
       run: |
           cd lede/
           git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git ./package/luci-app-dnsproxy
@@ -58,19 +53,19 @@ jobs:
           sed -i 's/192.168.1.1/192.168.41.1/g' package/base-files/files/bin/config_generate
           sed -i 's/OpenWRT/AkiKiiro/g' package/base-files/files/bin/config_generate
 
-      - name: Load config
+    - name: Load config
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE lede/.config
         cd lede && make defconfig
 
-      - name: Download package
+    - name: Download package
       working-directory: ./lede
       run: |
         make download -j48
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
-      - name: Compile the firmware
+    - name: Compile the firmware
       working-directory: ./lede
       id: compile
       run: |
@@ -80,14 +75,14 @@ jobs:
         echo "FILE_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
-      - name: Upload bin directory
+    - name: Upload bin directory
       uses: actions/upload-artifact@main
       if: steps.compile.outputs.status == 'success' && !cancelled()
       with:
         name: OpenWRT_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
         path: lede/bin
 
-      - name: Organize files
+    - name: Organize files
       id: organize
       if: steps.compile.outputs.status == 'success' && !cancelled()
       run: |
@@ -96,7 +91,7 @@ jobs:
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
     
-      - name: Upload to 3rd-party firmware
+    - name: Upload to 3rd-party firmware
       id: upload
       if: steps.compile.outputs.status == 'success' && !cancelled()
       run: |
