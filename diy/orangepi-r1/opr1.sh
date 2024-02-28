@@ -41,6 +41,8 @@ git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luc
 ## Update feeds
 ./scripts/feeds update -a 
 patch -p1 < "${OP_BUILD_PATH}"/diy/orangepi-r1/All_openwrt-22.03.6.patch
+./scripts/feeds update opicyberwrt
+./scripts/feeds update diskman
 ./scripts/feeds install -a
 
 # Irqbalance
