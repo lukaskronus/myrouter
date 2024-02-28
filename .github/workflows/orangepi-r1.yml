@@ -8,7 +8,6 @@ on:
 
 env:
   CONFIG_FILE: config/orangepi-r1.config
-  DIY_01: diy/orangepi-r1/opr1.sh
 
 jobs:
   compile:
@@ -33,18 +32,20 @@ jobs:
     - name: Clone source code
       run: |
         df -hT $PWD
-        chmod +x $DIY_01
-        cd /workdir
-        $GITHUB_WORKSPACE/$DIY_01
+        git clone --single-branch --filter=blob:none -b v22.03.6 https://github.com/openwrt/openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     
-#    - name: Apply patches
-#      working-directory: ./openwrt
-#      run: |
-#        patch -p1 < "${GITHUB_WORKSPACE}/diy/orangepi-r1/All-openwrt-21.02.patch"
-#        sed -i '$a src-git opicyberwrt https://github.com/lukaskronus/opi-r1-cyberwrt' feeds.conf.default
-#        cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/0001-sunxi-add-dts-for-USB-in-OrangePi-R1-expansion-board.patch" ./target/linux/sunxi/patches-5.4/
-#        scripts/feeds update -a && scripts/feeds install -a
+    - name: Apply patches
+      working-directory: ./openwrt
+      run: |
+        wget https://github.com/melsem/opi-zero-cyberwrt/raw/master/patch/All_openwrt-22.03.6.patch
+        git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
+        ./scripts/feeds update -a
+        patch -p1 < All_openwrt-22.03.6.patch
+        ./scripts/feeds update opicyberwrt
+        ./scripts/feeds update diskman
+        ./scripts/feeds install -a
+        cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/0001-sunxi-add-dts-for-USB-in-OrangePi-R1-expansion-board.patch" ./target/linux/sunxi/patches-5.10/
     
     - name: Cache OpenWRT
       uses: HiGarfield/cachewrtbuild@main
