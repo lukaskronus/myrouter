@@ -38,13 +38,13 @@ jobs:
         $GITHUB_WORKSPACE/$DIY_01
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     
-    - name: Apply patches
-      working-directory: ./openwrt
-      run: |
-        patch -p1 < "${GITHUB_WORKSPACE}/diy/orangepi-r1/All-openwrt-21.02.patch"
-        sed -i '$a src-git opicyberwrt https://github.com/lukaskronus/opi-r1-cyberwrt' feeds.conf.default
-        cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/0001-sunxi-add-dts-for-USB-in-OrangePi-R1-expansion-board.patch" ./target/linux/sunxi/patches-5.4/
-        scripts/feeds update -a && scripts/feeds install -a
+#    - name: Apply patches
+#      working-directory: ./openwrt
+#      run: |
+#        patch -p1 < "${GITHUB_WORKSPACE}/diy/orangepi-r1/All-openwrt-21.02.patch"
+#        sed -i '$a src-git opicyberwrt https://github.com/lukaskronus/opi-r1-cyberwrt' feeds.conf.default
+#        cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/0001-sunxi-add-dts-for-USB-in-OrangePi-R1-expansion-board.patch" ./target/linux/sunxi/patches-5.4/
+#        scripts/feeds update -a && scripts/feeds install -a
     
     - name: Cache OpenWRT
       uses: HiGarfield/cachewrtbuild@main
