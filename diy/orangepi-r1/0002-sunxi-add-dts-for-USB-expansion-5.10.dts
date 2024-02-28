@@ -1,0 +1,32 @@
+---
+ arch/arm/boot/dts/sun8i-h2-plus-orangepi-r1.dts | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-r1.dts b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-r1.dts
+index 3356f4210..8e117c95b 100644
+--- a/arch/arm/boot/dts/sun8i-h2-plus-orangepi-r1.dts
++++ b/arch/arm/boot/dts/sun8i-h2-plus-orangepi-r1.dts
+@@ -68,6 +68,20 @@
+ 	};
+ };
+ 
++&ehci1 {
++	status = "okay";
++};
++
++&ehci2 {
++	status = "okay";
++};
++
++&usbphy {
++	usb1_vbus-supply = <&reg_vcc_usb_eth>;
++	usb2_vbus-supply = <&reg_vcc_usb_eth>;
++};
++
++&usb1 {
++	status = "okay";
++};
+ 
+ &spi0 {
+ 	status = "okay";
+-- 
