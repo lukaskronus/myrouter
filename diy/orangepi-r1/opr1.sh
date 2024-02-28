@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export OP_BUILD_PATH=$PWD
+export OP_BUILD_PATH="/home/runner/work/myrouter/myrouter/"
 
 # Clone source code
 git clone --single-branch --filter=blob:none -b v22.03.6 https://github.com/openwrt/openwrt openwrt_release
@@ -33,7 +33,7 @@ cp -rf ./openwrt_release/package/kernel/linux/* ./openwrt/package/kernel/linux/
 
 shopt -s extglob
 
-cd "${OP_BUILD_PATH}"/openwrt/
+cd openwrt/
 
 ## Prepare
 git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
