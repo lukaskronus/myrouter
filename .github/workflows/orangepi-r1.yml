@@ -45,7 +45,7 @@ jobs:
         ./scripts/feeds update opicyberwrt
         ./scripts/feeds update diskman
         ./scripts/feeds install -a
-        cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/0002-sunxi-add-dts-for-USB-expansion-5.10.patch" ./target/linux/sunxi/patches-5.10/
+        cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/0001-sunxi-add-dts-for-USB-in-OrangePi-R1-expansion-board" ./target/linux/sunxi/patches-5.10/
     
     - name: Cache OpenWRT
       uses: HiGarfield/cachewrtbuild@main
