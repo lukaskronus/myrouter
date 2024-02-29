@@ -38,7 +38,7 @@ jobs:
     - name: Apply patches
       working-directory: ./openwrt
       run: |
-        wget https://github.com/melsem/opi-zero-cyberwrt/raw/master/patch/All_openwrt-22.03.6.patch
+        cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/All_openwrt-22.03.6.patch" ./
         git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
         ./scripts/feeds update -a
         patch -p1 < All_openwrt-22.03.6.patch
