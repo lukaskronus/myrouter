@@ -42,6 +42,7 @@ jobs:
         git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
         ./scripts/feeds update -a
         patch -p1 < All_openwrt-22.03.6.patch
+        sed -i '$a src-git opicyberwrt https://github.com/melsem/opi-r1-cyberwrt' feeds.conf.default
         ./scripts/feeds update opicyberwrt
         ./scripts/feeds update diskman
         ./scripts/feeds install -a
