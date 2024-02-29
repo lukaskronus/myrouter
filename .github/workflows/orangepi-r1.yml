@@ -59,10 +59,9 @@ jobs:
         prefix: ${{ github.workspace }}/openwrt
     
     - name: Load custom config
-      run: |
+      run: cd openwrt && make defconfig
 #        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        cd openwrt && make defconfig
-    
+   
     - name: Download package
       working-directory: ./openwrt
       run: |
