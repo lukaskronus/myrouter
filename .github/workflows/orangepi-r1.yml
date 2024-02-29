@@ -38,14 +38,10 @@ jobs:
     - name: Apply patches
       working-directory: ./openwrt
       run: |
-        cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/All_openwrt-22.03.6.patch" ./
         git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
-        ./scripts/feeds update -a
-        patch -p1 < All_openwrt-22.03.6.patch
+        patch -p1 < "${GITHUB_WORKSPACE}/diy/orangepi-r1/All_openwrt-22.03.6.patch"
         sed -i '$a src-git opicyberwrt https://github.com/melsem/opi-r1-cyberwrt' feeds.conf.default
-        ./scripts/feeds update opicyberwrt
-        ./scripts/feeds update diskman
-        ./scripts/feeds install -a
+        ./scripts/feeds update -a && ./scripts/feeds install -a
         cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/0001-sunxi-add-dts-for-USB-in-OrangePi-R1-expansion-board.patch" ./target/linux/sunxi/patches-5.10/
     
     - name: Cache OpenWRT
