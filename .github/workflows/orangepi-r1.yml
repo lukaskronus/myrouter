@@ -39,11 +39,14 @@ jobs:
     - name: Apply patches
       working-directory: ./openwrt
       run: |
+        wget https://github.com/melsem/opi-zero-cyberwrt/raw/master/patch/All_openwrt-22.03.6.patch
+        wget https://github.com/melsem/opi-zero-cyberwrt/raw/master/patch/036-.config_openwrt-22.03.6.patch
         ./scripts/feeds update -a
-        patch -p1 < "${GITHUB_WORKSPACE}/diy/orangepi-r1/All_openwrt-22.03.6.patch"
-        git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
-        sed -i '$a src-git opicyberwrt https://github.com/melsem/opi-zero-cyberwrt.git' feeds.conf.default
-        ./scripts/feeds update -a && ./scripts/feeds install -a
+        patch -p1 < All_openwrt-22.03.6.patch
+        ./scripts/feeds update opicyberwrt
+        ./scripts/feeds update diskman
+        ./scripts/feeds install -a
+        patch -p1 < 036-.config_openwrt-22.03.6.patch
         cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/0001-sunxi-add-dts-for-USB-in-OrangePi-R1-expansion-board.patch" ./target/linux/sunxi/patches-5.10/
     
     - name: Cache OpenWRT
@@ -57,7 +60,7 @@ jobs:
     
     - name: Load custom config
       run: |
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+#        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         cd openwrt && make defconfig
     
     - name: Download package
