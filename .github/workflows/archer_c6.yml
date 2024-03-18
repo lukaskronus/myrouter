@@ -98,9 +98,9 @@ jobs:
       run: |
         zip -rj archerc6.zip $FIRMWARE
         curl -sL https://git.io/file-transfer | sh
-        ./transfer trs --no-progress ./archerc6.zip 2>&1 | tee trs.log
-        echo "::notice file=transfer.sh::$(cat trs.log | grep https)"
-        echo "url=$(cat trs.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+        ./transfer gg --no-progress ./archerc6.zip 2>&1 | tee gg.log
+        echo "::notice file=transfer.sh::$(cat gg.log | grep https)"
+        echo "url=$(cat gg.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
 
     - name: Telegram notification
       if: steps.organize.outputs.status == 'success' && !cancelled()
