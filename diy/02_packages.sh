@@ -6,6 +6,8 @@ git clone -b luci2 https://github.com/lukaskronus/luci-proto-batman-adv.git ./pa
 git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
 
 # Update feeds
+# If the update is slow, use this command to swith from git.openwrt.org to github.com
+# sed -i -E 's;git.openwrt.org/(feed|project);github.com/openwrt;' feeds.conf.default
 ./scripts/feeds update -a && ./scripts/feeds install -a
 # Enable irqbalance
 sed -i "s/enabled '0'/enabled '1'/g" feeds/packages/utils/irqbalance/files/irqbalance.config
