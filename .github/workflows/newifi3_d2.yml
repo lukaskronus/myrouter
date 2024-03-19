@@ -61,7 +61,7 @@ jobs:
         toolchain: true
         skip: true
         clean: false
-        prefix: ${{ github.workspace }}/newifi
+        prefix: ${{ github.workspace }}/openwrt
 
     - name: Load custom config
       run: |

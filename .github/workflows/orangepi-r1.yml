@@ -54,7 +54,7 @@ jobs:
         toolchain: true
         skip: true
         clean: false
-        prefix: ${{ github.workspace }}/opr1    
+        prefix: ${{ github.workspace }}/openwrt   
 
     - name: Load custom config
       run: |
