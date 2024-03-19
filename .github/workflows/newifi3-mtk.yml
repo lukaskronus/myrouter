@@ -55,7 +55,7 @@ jobs:
         toolchain: true
         skip: true
         clean: false
-        prefix: ${{ github.workspace }}/openwrt
+        prefix: ${{ github.workspace }}/newifi-mtk
 
     - name: Load custom config
       run: |
@@ -101,9 +101,9 @@ jobs:
       run: |
         zip -rj newifi3d2.zip $FIRMWARE
         curl -sL https://git.io/file-transfer | sh
-        ./transfer gg --no-progress ./newifi3d2.zip 2>&1 | tee gg.log
-        echo "::notice file=transfer.sh::$(cat gg.log | grep https)"
-        echo "url=$(cat gg.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+        ./transfer null --no-progress ./newifi3d2.zip 2>&1 | tee null.log
+        echo "::notice file=transfer.sh::$(cat null.log | grep https)"
+        echo "url=$(cat null.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
 
     - name: Telegram notification
       if: steps.organize.outputs.status == 'success' && !cancelled()
