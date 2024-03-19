@@ -32,29 +32,20 @@ jobs:
     - name: Clone source code
       run: |
         df -hT $PWD
-        wget https://github.com/openwrt/openwrt/archive/refs/tags/v22.03.6.tar.gz
-        tar -zxf v22.03.6.tar.gz && mv openwrt* openwrt/
+        wget https://github.com/openwrt/openwrt/archive/refs/tags/v23.05.2.tar.gz
+        tar -zxf v23.05.2.tar.gz && mv openwrt* openwrt/
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     
     - name: Apply patches
       working-directory: ./openwrt
       run: |
-        wget https://github.com/melsem/opi-zero-cyberwrt/raw/master/patch/All_openwrt-22.03.6.patch
+        wget https://github.com/melsem/opi-zero-cyberwrt/raw/master/patch/All_openwrt-23.05.2.patch
         ./scripts/feeds update -a
-        patch -p1 < All_openwrt-22.03.6.patch
+        patch -p1 < All_openwrt-23.05.2.patch
         ./scripts/feeds update opicyberwrt
         ./scripts/feeds update diskman
         ./scripts/feeds install -a
-        cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/0001-sunxi-add-dts-for-USB-in-OrangePi-R1-expansion-board.patch" ./target/linux/sunxi/patches-5.10/
-    
-    - name: Cache OpenWRT
-      uses: HiGarfield/cachewrtbuild@main
-      with:
-        ccache: true
-        toolchain: true
-        skip: true
-        clean: false
-        prefix: ${{ github.workspace }}/openwrt
+        cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/0001-sunxi-add-dts-for-USB-in-OrangePi-R1-expansion-board.patch" ./target/linux/sunxi/patches-5.15/
     
     - name: Load custom config
       run: |
