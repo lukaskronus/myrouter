@@ -64,7 +64,7 @@ jobs:
     - name: Download package
       working-directory: ./openwrt
       run: |
-        mkdir -p files/etc/config/network && cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/network" $_        
+        mkdir -p files/etc/config/ && cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/network" $_        
         make download -j48
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
