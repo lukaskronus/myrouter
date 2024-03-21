@@ -65,6 +65,7 @@ jobs:
       working-directory: ./openwrt
       run: |
         mkdir -p files/etc/config/ && cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/network" $_        
+        sed -i "s/enabled '0'/enabled '1'/g" feeds/packages/utils/irqbalance/files/irqbalance.config
         make download -j48
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
@@ -96,6 +97,7 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload to 3rd-party firmware
+      id: upload
       if: steps.compile.outputs.status == 'success' && !cancelled()
       run: |
         zip -rj orangepir1.zip $FIRMWARE
