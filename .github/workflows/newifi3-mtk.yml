@@ -38,8 +38,8 @@ jobs:
     - name: Clone source code
       run: |
         df -hT $PWD
-        wget https://github.com/openwrt/openwrt/archive/refs/tags/v22.03.6.tar.gz
-        tar -zxf v22.03.6.tar.gz && mv openwrt* openwrt/
+        wget https://github.com/openwrt/openwrt/archive/refs/tags/v23.05.4.tar.gz
+        tar -zxf v23.05.4.tar.gz && mv openwrt* openwrt/
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
     - name: Prepare packages

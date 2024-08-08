@@ -24,6 +24,7 @@ sed -i "s/enabled '0'/enabled '1'/g" feeds/packages/utils/irqbalance/files/irqba
 sed -i 's/192.168.1.1/192.168.41.11/g' package/base-files/files/bin/config_generate
 sed -i 's/OpenWrt/AkiKiiro/g' package/base-files/files/bin/config_generate
 # Vermagic
-wget https://downloads.openwrt.org/releases/22.03.6/targets/ramips/mt7621/packages/Packages.gz
+latest_release="$(curl -s https://api.github.com/repos/openwrt/openwrt/tags | grep -Eo "v23.05.+[0-9\.]" | head -n 1 | sed 's/v//g')"
+wget https://downloads.openwrt.org/releases/${latest_release}/targets/ramips/mt7621/packages/Packages.gz
 zgrep -m 1 "Depends: kernel (=.*)$" Packages.gz | sed -e 's/.*-\(.*\))/\1/' >.vermagic
 sed -i -e 's/^\(.\).*vermagic$/\1cp $(TOPDIR)\/.vermagic $(LINUX_DIR)\/.vermagic/' include/kernel-defaults.mk
