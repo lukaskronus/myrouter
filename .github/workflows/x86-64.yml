@@ -1,21 +1,21 @@
-name: NewifiD2 - ImmortalWRT
+name: x86-64 Firmware
 
 on:
   push:
     paths:
-      - 'config/newifi3_immortalwrt.config'
+      - 'config/x86-64.config'
   # schedule:
   #   - cron: '0 0 * * 6'
   workflow_dispatch:
 
 env:
-  CONFIG_FILE: config/newifi3_immortalwrt.config
+  CONFIG_FILE: config/x86-64.config
   DIY_01: scripts/immortalwrt/get_ready.sh
   DIY_02: scripts/immortalwrt/patching.sh
 
 jobs:
   compile:
-    name: 📶NEWIFI D2📶
+    name: 📶HP T520📶
     runs-on: ubuntu-22.04
 
     steps:
@@ -47,14 +47,14 @@ jobs:
         cd immortalwrt/
         $GITHUB_WORKSPACE/$DIY_02
        
-    - name: Cache ImmortalWrt
-      uses: HiGarfield/cachewrtbuild@main
-      with:
-        ccache: true
-        toolchain: true
-        skip: true
-        clean: false
-        prefix: ${{ github.workspace }}/immortalwrt
+#    - name: Cache ImmortalWrt
+#      uses: HiGarfield/cachewrtbuild@main
+#      with:
+#        ccache: true
+#        toolchain: true
+#        skip: true
+#        clean: false
+#        prefix: ${{ github.workspace }}/immortalwrt
 
     - name: Load custom config
       run: |
@@ -98,9 +98,9 @@ jobs:
       id: upload
       if: steps.compile.outputs.status == 'success' && !cancelled()
       run: |
-        zip -rj newifi3d2.zip $FIRMWARE
+        zip -rj x86-64.zip $FIRMWARE
         curl -sL https://git.io/file-transfer | sh
-        ./transfer fio --no-progress ./newifi3d2.zip 2>&1 | tee fio.log
+        ./transfer fio --no-progress ./x86-64.zip 2>&1 | tee fio.log
         echo "::notice file=transfer.sh::$(cat fio.log | grep https)"
         echo "url=$(cat fio.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
 
