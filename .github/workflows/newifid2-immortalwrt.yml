@@ -48,14 +48,13 @@ jobs:
         $GITHUB_WORKSPACE/$DIY_02
        
     - name: Cache ImmortalWrt
-      uses: HiGarfield/cachewrtbuild@main
+      uses: klever1988/cachewrtbuild@main
       with:
         ccache: true
         toolchain: true
-        skip: true
-        clean: false
+        mixkey: 'ramips'
         prefix: ${{ github.workspace }}/immortalwrt
-
+        
     - name: Load custom config
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE immortalwrt/.config
