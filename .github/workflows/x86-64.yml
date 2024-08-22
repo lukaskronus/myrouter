@@ -11,7 +11,6 @@ on:
 env:
   CONFIG_FILE: config/x86-64.config
   DIY_01: scripts/immortalwrt/get_ready.sh
-  DIY_02: scripts/immortalwrt/patching.sh
 
 jobs:
   compile:
@@ -43,10 +42,20 @@ jobs:
     
     - name: Prepare packages
       run: |
-        chmod +x $DIY_02
         cd immortalwrt/
-        $GITHUB_WORKSPACE/$DIY_02
-       
+        git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
+        ./scripts/feeds update -a && ./scripts/feeds install -a
+        sed -i "s/enabled '0'/enabled '1'/g" feeds/packages/utils/irqbalance/files/irqbalance.config
+        sed -i 's/ImmortalWrt/HP-T520/g' package/base-files/files/bin/config_generate
+
+    - name: Change vermagic
+      run: |
+        cd immortalwrt/
+        latest_version="$(curl -s https://api.github.com/repos/immortalwrt/immortalwrt/tags | grep -Eo "v23.05.+[0-9\.]" | head -n 1 | sed 's/v//g')"
+        wget https://downloads.immortalwrt.org/releases/${latest_version}/targets/x86/64/packages/Packages.gz
+        zgrep -m 1 "Depends: kernel (=.*)$" Packages.gz | sed -e 's/.*-\(.*\))/\1/' >.vermagic
+        sed -i -e 's/^\(.\).*vermagic$/\1cp $(TOPDIR)\/.vermagic $(LINUX_DIR)\/.vermagic/' include/kernel-defaults.mk
+
     - name: Cache ImmortalWrt
       uses: klever1988/cachewrtbuild@main
       with:
