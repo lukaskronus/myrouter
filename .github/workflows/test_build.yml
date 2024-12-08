@@ -34,7 +34,7 @@ jobs:
     
     - name: Clone source code
       run: |
-        git clone --single-branch --filter=blob:none -b mt7915_mtwifi https://github.com/padavanonly/immortalwrt.git
+        git clone --single-branch --filter=blob:none -b master https://github.com/coolsnowwolf/lede immortalwrt
         ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
     
     - name: Prepare packages
