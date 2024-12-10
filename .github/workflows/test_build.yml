@@ -38,7 +38,6 @@ jobs:
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     
     - name: Apply patches
-      working-directory: ./openwrt
       run: |
         chmod +x $DIY_01
         cd openwrt/
