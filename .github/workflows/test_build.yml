@@ -43,7 +43,7 @@ jobs:
         cd openwrt/
         $GITHUB_WORKSPACE/$DIY_01
 
-    - name: Cache ImmortalWrt
+    - name: Cache OpenWRT toolchain
       uses: klever1988/cachewrtbuild@main
       with:
         ccache: true
@@ -59,8 +59,6 @@ jobs:
     - name: Download package
       working-directory: ./openwrt
       run: |
-        mkdir -p files/etc/config/ && cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/network" $_        
-        sed -i "s/enabled '0'/enabled '1'/g" feeds/packages/utils/irqbalance/files/irqbalance.config
         make download -j48
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
@@ -95,9 +93,9 @@ jobs:
       id: upload
       if: steps.compile.outputs.status == 'success' && !cancelled()
       run: |
-        zip -rj orangepir1.zip $FIRMWARE
+        zip -rj newifid2.zip $FIRMWARE
         curl -sL https://git.io/file-transfer | sh
-        ./transfer fio --no-progress ./orangepir1.zip 2>&1 | tee fio.log
+        ./transfer fio --no-progress ./newifid2.zip 2>&1 | tee fio.log
         echo "::notice file=transfer.sh::$(cat fio.log | grep https)"
         echo "url=$(cat fio.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
 
