@@ -1,6 +1,6 @@
 name: Newifi3 - Test Build
 
-n:
+on:
   push:
     paths:
       - 'config/newifi3_test.config'
