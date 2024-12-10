@@ -28,7 +28,7 @@ sed -i 's/192.168.1.1/192.168.41.1/g' package/base-files/files/bin/config_genera
 sed -i 's/OpenWrt/AkiKiiro/g' package/base-files/files/bin/config_generate
 
 # Vermagic ImmortalWrt
-latest_version="$(curl -s https://api.github.com/repos/openwrt/openwrt/tags | grep -Eo "v23.05.+[0-9\.]" | head -n 1 | sed 's/v//g')"
+latest_version="$(curl -s https://api.github.com/repos/openwrt/openwrt/tags | grep -Eo "v22.03.+[0-9\.]" | head -n 1 | sed 's/v//g')"
 wget https://downloads.openwrt.org/releases/${latest_version}/targets/ramips/mt7621/packages/Packages.gz
 zgrep -m 1 "Depends: kernel (=.*)$" Packages.gz | sed -e 's/.*-\(.*\))/\1/' >.vermagic
 sed -i -e 's/^\(.\).*vermagic$/\1cp $(TOPDIR)\/.vermagic $(LINUX_DIR)\/.vermagic/' include/kernel-defaults.mk
