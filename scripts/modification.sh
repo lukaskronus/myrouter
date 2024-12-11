@@ -5,7 +5,9 @@ shopt -s extglob
 # Add personal packages
 git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git package/luci-app-cpu-status-mini
 git clone https://github.com/animegasan/luci-app-wolplus.git package/luci-app-wolplus
-git clone https://github.com/sirpdboy/luci-app-eqosplus package/luci-app-eqosplus
+#git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git ./package/luci-app-dnsproxy
+#git clone -b luci2 https://github.com/lukaskronus/luci-proto-batman-adv.git ./package/luci-proto-batman-adv
+#git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
 
 # Add Mediatek driver
 git clone https://github.com/ALSe61/openwrt-r3p-mtk.git
@@ -26,10 +28,3 @@ sed -i "s/enabled '0'/enabled '1'/g" feeds/packages/utils/irqbalance/files/irqba
 ## Ending
 # My modificaions
 sed -i 's/192.168.1.1/192.168.41.1/g' package/base-files/files/bin/config_generate
-sed -i 's/OpenWrt/AkiKiiro/g' package/base-files/files/bin/config_generate
-
-# Vermagic ImmortalWrt
-latest_version="$(curl -s https://api.github.com/repos/openwrt/openwrt/tags | grep -Eo "v22.03.+[0-9\.]" | head -n 1 | sed 's/v//g')"
-wget https://downloads.openwrt.org/releases/${latest_version}/targets/ramips/mt7621/packages/Packages.gz
-zgrep -m 1 "Depends: kernel (=.*)$" Packages.gz | sed -e 's/.*-\(.*\))/\1/' >.vermagic
-sed -i -e 's/^\(.\).*vermagic$/\1cp $(TOPDIR)\/.vermagic $(LINUX_DIR)\/.vermagic/' include/kernel-defaults.mk

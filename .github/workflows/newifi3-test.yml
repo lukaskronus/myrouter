@@ -1,17 +1,17 @@
-name: NewifiD2 - ImmortalWRT
+name: NewifiD2 - OpenWRT 23.05
 
 on:
   push:
     paths:
-      - 'config/newifi3_immortalwrt.config'
+      - 'config/newifid2-test.config'
   # schedule:
   #   - cron: '0 0 * * 6'
   workflow_dispatch:
 
 env:
-  CONFIG_FILE: config/newifi3_immortalwrt.config
-  DIY_01: scripts/immortalwrt/get_ready.sh
-  DIY_02: scripts/immortalwrt/patching.sh
+  CONFIG_FILE: config/newifid2-test.config
+  DIY_01: scripts/openwrt-23.05.sh
+  DIY_02: scripts/modification.sh
 
 jobs:
   compile:
@@ -39,36 +39,44 @@ jobs:
         chmod +x $DIY_01
         cd /workdir
         $GITHUB_WORKSPACE/$DIY_01
-        ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     
     - name: Prepare packages
       run: |
         chmod +x $DIY_02
-        cd immortalwrt/
+        cd openwrt/
         $GITHUB_WORKSPACE/$DIY_02
+
+    - name: Fix vermagic
+      working-directory: ./openwrt
+      run: |
+        latest_version="$(curl -s https://api.github.com/repos/openwrt/openwrt/tags | grep -Eo "v23.05.+[0-9\.]" | head -n 1 | sed 's/v//g')"
+        wget https://downloads.openwrt.org/releases/${latest_version}/targets/ramips/mt7621/packages/Packages.gz
+        zgrep -m 1 "Depends: kernel (=.*)$" Packages.gz | sed -e 's/.*-\(.*\))/\1/' >.vermagic
+        aed -i -e 's/^\(.\).*vermagic$/\1cp $(TOPDIR)\/.vermagic $(LINUX_DIR)\/.vermagic/' include/kernel-defaults.mk
        
-    - name: Cache ImmortalWrt
+    - name: Cache openwrt
       uses: klever1988/cachewrtbuild@main
       with:
         ccache: true
         toolchain: true
         mixkey: 'ramips'
-        prefix: ${{ github.workspace }}/immortalwrt
+        prefix: ${{ github.workspace }}/openwrt
         
     - name: Load custom config
       run: |
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE immortalwrt/.config
-        cd immortalwrt && make defconfig
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        cd openwrt && make defconfig
     
     - name: Download package
-      working-directory: ./immortalwrt
+      working-directory: ./openwrt
       run: |
         make download -j48
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
     
     - name: Compile the firmware
-      working-directory: ./immortalwrt
+      working-directory: ./openwrt
       id: compile
       run: |
         make -j$(nproc) || make -j1 || make -j1 V=s
@@ -82,13 +90,13 @@ jobs:
       if: steps.compile.outputs.status == 'success' && !cancelled()
       with:
         name: OpenWRT_bin_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
-        path: immortalwrt/bin
+        path: openwrt/bin
 
     - name: Organize files
       id: organize
       if: steps.compile.outputs.status == 'success' && !cancelled()
       run: |
-        cd immortalwrt/bin/targets/*/*
+        cd openwrt/bin/targets/*/*
         rm -rf packages
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
@@ -108,7 +116,7 @@ jobs:
       run: |
         MSG="
         Device: ${{ env.DEVICE_NAME }}
-        Variation: ImmortalWrt
+        Variation: Newifi3-D2 Test
         Compiled on: ${{ env.FILE_DATE }}
         Download: ${{ steps.upload.outputs.url }}
         "
