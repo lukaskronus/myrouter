@@ -60,7 +60,7 @@ jobs:
       with:
         ccache: true
         toolchain: true
-        mixkey: 'ramips'
+        mixkey: 'ramips-23.05'
         prefix: ${{ github.workspace }}/openwrt
         
     - name: Load custom config
@@ -121,3 +121,4 @@ jobs:
         Download: ${{ steps.upload.outputs.url }}
         "
         curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_TO }}&text=${MSG}"
+        
