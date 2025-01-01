@@ -5,10 +5,6 @@ shopt -s extglob
 # Add personal packages
 git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
 
-# Add Mediatek driver
-# git clone https://github.com/ALSe61/openwrt-r3p-mtk.git
-# rsync -av openwrt-r3p-mtk/target/ ./target && rsync -av --delete openwrt-r3p-mtk/package/mt/ ./package/mt
-
 # Add turboacc packages
 # curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh
 

@@ -117,7 +117,7 @@ jobs:
       run: |
         MSG="
         Device: ${{ env.DEVICE_NAME }}
-        Variation: ImmortalWrt
+        Variation: x86-64 Build
         Compiled on: ${{ env.FILE_DATE }}
         Download: ${{ steps.upload.outputs.url }}
         "

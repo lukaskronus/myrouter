@@ -2,7 +2,7 @@
 
 # Clone source code
 # latest_release="$(curl -s https://github.com/immortalwrt/immortalwrt/tags | grep -Eo "v[0-9\.]+\-*r*c*[0-9]*.tar.gz" | sed -n '/[2-9][0-9]/p' | sed -n 1p | sed 's/.tar.gz//g')"
-git clone --single-branch --filter=blob:none -b v23.05.3 https://github.com/immortalwrt/immortalwrt.git immortalwrt_release
+git clone --single-branch --filter=blob:none -b v23.05.4 https://github.com/immortalwrt/immortalwrt.git immortalwrt_release
 git clone --single-branch --filter=blob:none -b openwrt-23.05 https://github.com/immortalwrt/immortalwrt.git immortalwrt
 
 # Move stable version files to snapshot
