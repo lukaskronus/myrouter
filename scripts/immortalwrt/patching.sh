@@ -3,10 +3,12 @@ shopt -s extglob
 
 ## Prepare
 # Add personal packages
-git clone https://github.com/gSpotx2f/luci-app-cpu-status-mini.git ./package/luci-app-cpu-status-mini
+git clone https://github.com/gSpotx2f/luci-app-cpu-status.git ./package/luci-app-cpu-status
+git clone https://github.com/gSpotx2f/luci-app-temp-status.git ./package/luci-app-temp-status
+git clone https://github.com/gSpotx2f/luci-app-disks-info.git ./package/luci-app-disks-info
 
 # Add turboacc packages
-# curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh
+curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh
 
 ## Update feeds
 # If the update is slow, use this command to swith from git.openwrt.org to github.com
