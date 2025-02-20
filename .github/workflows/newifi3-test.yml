@@ -10,7 +10,7 @@ on:
 
 env:
   CONFIG_FILE: config/newifid2-test.config
-  DIY_01: scripts/openwrt-23.05.sh
+  DIY_01: scripts/openwrt-24.10.sh
   DIY_02: scripts/modification.sh
 
 jobs:
