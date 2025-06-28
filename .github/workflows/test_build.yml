@@ -8,7 +8,7 @@ on:
 
 env:
   CONFIG_FILE: config/newifi3_test.config
-  DIY_01: scripts/only_test.sh
+  DIY_01: scripts/modification.sh
 
 jobs:
   compile:
@@ -33,8 +33,8 @@ jobs:
     - name: Clone source code
       run: |
         df -hT $PWD
-        wget -c https://github.com/openwrt/openwrt/archive/refs/tags/v22.03.7.tar.gz
-        tar -zxf v22.03.7.tar.gz && mv openwrt* openwrt/
+        wget -c https://github.com/openwrt/openwrt/archive/refs/tags/v24.10.2.tar.gz
+        tar -zxf v24.10.2.tar.gz && mv openwrt* openwrt/
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     
     - name: Apply patches
@@ -89,22 +89,12 @@ jobs:
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
-    - name: Upload to 3rd-party firmware
-      id: upload
-      if: steps.compile.outputs.status == 'success' && !cancelled()
-      run: |
-        zip -rj newifid2.zip $FIRMWARE
-        curl -sL https://git.io/file-transfer | sh
-        ./transfer fio --no-progress ./newifid2.zip 2>&1 | tee fio.log
-        echo "::notice file=transfer.sh::$(cat fio.log | grep https)"
-        echo "url=$(cat fio.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
-
     - name: Telegram notification
       if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         MSG="
         Device: ${{ env.DEVICE_NAME }}
-        Variation: NewifiD2 - OpenWRT
+        Variation: NewifiD2 - OpenWRT Test Build
         Compiled on: ${{ env.FILE_DATE }}
         Download: ${{ steps.upload.outputs.url }}
         "
