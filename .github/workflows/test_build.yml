@@ -34,12 +34,12 @@ jobs:
       run: |
         df -hT $PWD
         wget -c https://github.com/openwrt/openwrt/archive/refs/tags/v22.03.6.tar.gz
-        tar -zxf vv22.03.6.tar.gz && mv openwrt* openwrt/
+        tar -zxf v22.03.6.tar.gz && mv openwrt* openwrt/
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
     - name: Add mtk driver
-      working-directory: ./openwrt
       run: |
+        cd openwrt/
         git clone https://github.com/lukaskronus/openwrt-r3p-mtk.git
         rsync -av openwrt-r3p-mtk/target/ ./target && rsync -av --delete openwrt-r3p-mtk/package/mt/ ./package/mt
     
