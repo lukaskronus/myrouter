@@ -1,16 +1,16 @@
-name: NewifiD2 - OpenWRT 22.03
+name: NewifiD2 - OpenWRT
 
 on:
   push:
     paths:
-      - 'config/newifid2-stable.config'
+      - 'config/newifi3_openwrt.config'
   # schedule:
   #   - cron: '0 0 * * 6'
   workflow_dispatch:
 
 env:
-  CONFIG_FILE: config/newifid2-stable.config
-  DIY_01: scripts/openwrt-22.03.sh
+  CONFIG_FILE: config/newifi3_openwrt.config
+  DIY_01: scripts/openwrt-24.10.sh
   DIY_02: scripts/modification.sh
 
 jobs:
@@ -50,7 +50,7 @@ jobs:
     - name: Fix vermagic
       working-directory: ./openwrt
       run: |
-        latest_version="$(curl -s https://api.github.com/repos/immortalwrt/immortalwrt/tags | grep -Eo "v22.03.+[0-9\.]" | head -n 1 | sed 's/v//g')"
+        latest_version="$(curl -s https://api.github.com/repos/immortalwrt/immortalwrt/tags | grep -Eo "v24.10.+[0-9\.]" | head -n 1 | sed 's/v//g')"
         wget https://downloads.immortalwrt.org/releases/${latest_version}/targets/ramips/mt7621/packages/Packages.gz
         zgrep -m 1 "Depends: kernel (=.*)$" Packages.gz | sed -e 's/.*-\(.*\))/\1/' >.vermagic
         sed -i -e 's/^\(.\).*vermagic$/\1cp $(TOPDIR)\/.vermagic $(LINUX_DIR)\/.vermagic/' include/kernel-defaults.mk
