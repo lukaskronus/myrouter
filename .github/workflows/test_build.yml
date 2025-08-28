@@ -50,11 +50,11 @@ jobs:
         $GITHUB_WORKSPACE/$DIY_01
 
     - name: Cache OpenWRT toolchain
-      uses: klever1988/cachewrtbuild@main
+      uses: stupidloud/cachewrtbuild@main
       with:
         ccache: true
         toolchain: true
-        mixkey: 'ramips_openwrt'
+        mixkey: 'ramips_test'
         prefix: ${{ github.workspace }}/openwrt
 
     - name: Load custom config

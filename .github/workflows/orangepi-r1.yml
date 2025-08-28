@@ -48,7 +48,7 @@ jobs:
         cp -rf "${GITHUB_WORKSPACE}/diy/orangepi-r1/0001-sunxi-add-dts-for-USB-in-OrangePi-R1-expansion-board.patch" ./target/linux/sunxi/patches-5.15/
 
     - name: Cache ImmortalWrt
-      uses: klever1988/cachewrtbuild@main
+      uses: stupidloud/cachewrtbuild@main
       with:
         ccache: true
         toolchain: true
