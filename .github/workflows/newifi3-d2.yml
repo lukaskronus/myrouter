@@ -107,16 +107,16 @@ jobs:
       run: |
         zip -rj newifi3d2.zip $FIRMWARE
         curl -sL https://git.io/file-transfer | sh
-        ./transfer fio --no-progress ./newifi3d2.zip 2>&1 | tee fio.log
-        echo "::notice file=transfer.sh::$(cat fio.log | grep https)"
-        echo "url=$(cat fio.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+        ./transfer null --no-progress ./newifi3d2.zip 2>&1 | tee null.log
+        echo "::notice file=transfer.sh::$(cat null.log | grep https)"
+        echo "url=$(cat null.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
 
     - name: Telegram notification
       if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         MSG="
         Device: ${{ env.DEVICE_NAME }}
-        Variation: Newifi3-D2 Stable
+        Variation: Newifi3-D2
         Compiled on: ${{ env.FILE_DATE }}
         Download: ${{ steps.upload.outputs.url }}
         "
