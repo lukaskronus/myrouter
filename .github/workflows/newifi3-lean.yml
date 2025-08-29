@@ -32,7 +32,7 @@ jobs:
     - name: Clone source code
       run: |
         df -hT $PWD
-        git clone --depths=1 https://github.com/coolsnowwolf/lede openwrt/
+        git clone --filter=blob:none --depth=1 https://github.com/coolsnowwolf/lede openwrt/
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
         cd openwrt/
         scripts/feeds update -a && scripts/feeds install -a
@@ -103,3 +103,4 @@ jobs:
         Download: ${{ steps.upload.outputs.url }}
         "
         curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_TO }}&text=${MSG}"
+
