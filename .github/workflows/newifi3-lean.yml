@@ -1,4 +1,4 @@
-name: Newifi3 - Test Build
+name: Newifi3 - Lean
 
 on:
   push:
@@ -11,7 +11,7 @@ env:
 
 jobs:
   compile:
-    name: 📶Test Build📶
+    name: 📶Newifi3 - Lean📶
     runs-on: ubuntu-22.04
 
     steps:
