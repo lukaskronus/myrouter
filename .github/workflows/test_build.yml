@@ -94,7 +94,17 @@ jobs:
         rm -rf packages
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
-
+    
+    - name: Upload to 3rd-party firmware
+      id: upload
+      if: steps.compile.outputs.status == 'success' && !cancelled()
+      run: |
+        zip -rj newifi3d2.zip $FIRMWARE
+        curl -sL https://git.io/file-transfer | sh
+        ./transfer null --no-progress ./newifi3d2.zip 2>&1 | tee null.log
+        echo "::notice file=transfer.sh::$(cat null.log | grep https)"
+        echo "url=$(cat null.log | grep https | cut -f3 -d" ")" >> $GITHUB_OUTPUT
+    
     - name: Telegram notification
       if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
