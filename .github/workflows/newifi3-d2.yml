@@ -1,4 +1,4 @@
-name: NewifiD2 - OpenWRT
+name: Build NewifiD2 - OpenWRT
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: Newifi3 - Test Build
+name: Build Newifi3 - Test Build
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: x86-64 Firmware
+name: Build x86-64 Firmware
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: H3C TX1801 - OpenWRT
+name: Build H3C TX1801 - OpenWRT
 
 on:
   push:
