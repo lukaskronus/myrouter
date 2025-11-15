@@ -1,12 +1,7 @@
 #!/bin/bash
 shopt -s extglob
 
-## Prepare
-# Add personal packages
-#git clone https://github.com/NagaseKouichi/luci-app-dnsproxy.git ./package/luci-app-dnsproxy
-#git clone -b luci2 https://github.com/lukaskronus/luci-proto-batman-adv.git ./package/luci-proto-batman-adv
 git clone https://github.com/gSpotx2f/luci-app-cpu-status.git ./package/luci-app-cpu-status
-git clone https://github.com/gSpotx2f/luci-app-temp-status.git ./package/luci-app-temp-status
 git clone https://github.com/animegasan/luci-app-wolplus.git package/luci-app-wolplus
 
 # Add Mediatek driver
