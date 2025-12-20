@@ -2,7 +2,7 @@
 
 # Clone source code
 # latest_release="$(curl -s https://github.com/openwrt/openwrt/tags | grep -Eo "v[0-9\.]+\-*r*c*[0-9]*.tar.gz" | sed -n '/[2-9][0-9]/p' | sed -n 1p | sed 's/.tar.gz//g')"
-git clone --single-branch --filter=blob:none -b v24.10.3 https://github.com/openwrt/openwrt.git openwrt_release
+git clone --single-branch --filter=blob:none -b v24.10.5 https://github.com/openwrt/openwrt.git openwrt_release
 git clone --single-branch --filter=blob:none -b openwrt-24.10 https://github.com/openwrt/openwrt.git openwrt
 
 # Replace stable to snapshot files

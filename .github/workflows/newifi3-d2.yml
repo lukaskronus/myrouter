@@ -11,6 +11,7 @@ on:
 env:
   CONFIG_FILE: config/newifi3_openwrt.config
   DIY_01: scripts/modification.sh
+  DIY_02: scripts/modification.sh
 
 jobs:
   compile:
@@ -35,15 +36,16 @@ jobs:
     - name: Clone source code
       run: |
         df -hT $PWD
-        wget https://github.com/openwrt/openwrt/archive/refs/tags/v24.10.4.tar.gz
-        tar xzf v24.10.4.tar.gz && mv openwrt* openwrt/
+        chmod +x $DIY_01
+        cd /workdir
+        $GITHUB_WORKSPACE/$DIY_01
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
     
     - name: Prepare packages
       run: |
-        chmod +x $DIY_01
+        chmod +x $DIY_02
         cd openwrt/
-        $GITHUB_WORKSPACE/$DIY_01
+        $GITHUB_WORKSPACE/$DIY_02
 
     - name: Fix vermagic
       working-directory: ./openwrt
