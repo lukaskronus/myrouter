@@ -10,7 +10,7 @@ on:
 
 env:
   CONFIG_FILE: config/newifi3_openwrt.config
-  DIY_01: scripts/modification.sh
+  DIY_01: scripts/openwrt-24.10.sh
   DIY_02: scripts/modification.sh
 
 jobs:
@@ -120,4 +120,5 @@ jobs:
         Compiled on: ${{ env.FILE_DATE }}
         Download: ${{ steps.upload.outputs.url }}
         "
+
         curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_TO }}&text=${MSG}"
