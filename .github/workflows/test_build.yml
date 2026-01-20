@@ -33,14 +33,14 @@ jobs:
     - name: Clone source code
       run: |
         df -hT $PWD
-        wget -c https://github.com/openwrt/openwrt/archive/refs/tags/v22.03.7.tar.gz
-        tar -zxf v22.03.7.tar.gz && mv openwrt* openwrt/
+        wget -c https://github.com/openwrt/openwrt/archive/refs/tags/v24.10.5.tar.gz
+        tar -zxf v24.10.5.tar.gz && mv openwrt* openwrt/
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
     - name: Add mtk driver
       run: |
         cd openwrt/
-        git clone https://github.com/lukaskronus/openwrt-r3p-mtk.git
+        git clone --branch=kernel-6.9 https://github.com/lukaskronus/openwrt-r3p-mtk.git
         rsync -av openwrt-r3p-mtk/target/ ./target && rsync -av --delete openwrt-r3p-mtk/package/mt/ ./package/mt
     
     - name: Apply patches
