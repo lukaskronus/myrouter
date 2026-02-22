@@ -8,7 +8,7 @@ on:
 
 env:
   CONFIG_FILE: config/newifi3_mtk.config
-  DIY_01: scripts/modification.sh
+  #DIY_01: scripts/modification.sh
 
 jobs:
   compile:
@@ -33,36 +33,21 @@ jobs:
     - name: Clone source code
       run: |
         df -hT $PWD
-        wget -c https://github.com/openwrt/openwrt/archive/refs/tags/v24.10.5.tar.gz
-        tar -zxf v24.10.5.tar.gz && mv openwrt* openwrt/
+        git clone --single-branch --filter=blob:none -b master https://github.com/coolsnowwolf/lede.git openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
-    - name: Add mtk driver
+    - name: Install dependencies
+      working-directory: ./openwrt
       run: |
-        cd openwrt/
-        git clone --branch=kernel-6.9 https://github.com/lukaskronus/openwrt-r3p-mtk.git
-        rsync -av openwrt-r3p-mtk/target/ ./target && rsync -av --delete openwrt-r3p-mtk/package/mt/ ./package/mt
-    
-    - name: Apply patches
-      run: |
-        chmod +x $DIY_01
-        cd openwrt/
-        $GITHUB_WORKSPACE/$DIY_01
-
-    - name: Change vermagic
-      run: |
-        cd openwrt/
-        latest_version="$(curl -s https://api.github.com/repos/openwrt/openwrt/tags | grep -Eo "v22.03.+[0-9\.]" | head -n 1 | sed 's/v//g')"
-        wget https://downloads.openwrt.org/releases/${latest_version}/targets/ramips/mt7621/packages/Packages.gz
-        zgrep -m 1 "Depends: kernel (=.*)$" Packages.gz | sed -e 's/.*-\(.*\))/\1/' >.vermagic
-        sed -i -e 's/^\(.\).*vermagic$/\1cp $(TOPDIR)\/.vermagic $(LINUX_DIR)\/.vermagic/' include/kernel-defaults.mk
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
     
     - name: Cache OpenWRT toolchain
       uses: stupidloud/cachewrtbuild@main
       with:
         ccache: true
         toolchain: true
-        mixkey: 'ramips_test'
+        mixkey: 'ramips_lede'
         prefix: ${{ github.workspace }}/openwrt
 
     - name: Load custom config
@@ -118,7 +103,7 @@ jobs:
       run: |
         MSG="
         Device: ${{ env.DEVICE_NAME }}
-        Variation: NewifiD2 - Mediatek Driver
+        Variation: NewifiD2 - Lean's LEDE
         Compiled on: ${{ env.FILE_DATE }}
         Download: ${{ steps.upload.outputs.url }}
         "
