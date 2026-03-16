@@ -1,214 +1,229 @@
-name: mpv + ffmpeg nightly - Linux x86_64
+name: Build mpv and FFmpeg (Latest Commit)
 
 on:
   workflow_dispatch:
-#  schedule:
-#    - cron: '0 9 * * *'       # Daily at 09:00 UTC
-  push:
-    branches: [ main ]
-    paths:
-      - '.github/workflows/mpv-ffmpeg-nightly-linux.yml'
-
-permissions:
-  contents: read
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+        arch: [x86_64]
+        # Add arm64 support if needed
+        # include:
+        #   - os: ubuntu-24.04-arm
+        #     arch: arm64
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install common build dependencies
+      - name: Install system dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            build-essential git ca-certificates \
-            meson ninja-build pkg-config python3 python3-pip \
-            yasm nasm cmake autoconf automake libtool \
-            texinfo wget unzip patch
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf automake libtool pkg-config \
+            nasm yasm meson ninja-build \
+            python3 python3-pip \
+            git wget curl cmake \
+            build-essential \
+            libass-dev libfreetype6-dev \
+            libfribidi-dev libharfbuzz-dev \
+            libfontconfig1-dev \
+            libvulkan-dev libx11-dev \
+            libxcb-shm0-dev libxcb-xfixes0-dev \
+            libxcb-shape0-dev libxcb1-dev \
+            libxv-dev libxrandr-dev \
+            libpulse-dev libpipewire-0.3-dev \
+            libjpeg-dev libpng-dev \
+            libva-dev libvdpau-dev \
+            libdrm-dev libgbm-dev \
+            liblua5.2-dev libluajit-5.1-dev \
+            libuchardet-dev \
+            libbluray-dev libdvdnav-dev \
+            libcdio-paranoia-dev \
+            libsdl2-dev \
+            libv4l-dev libalsa-ocaml-dev \
+            ladspa-sdk \
+            rubberband-cli \
+            libzimg-dev \
+            wayland-protocols
 
-      - name: Install FFmpeg build dependencies
+      - name: Install Python packages
         run: |
-          sudo apt-get install -y --no-install-recommends \
-            libass-dev libfreetype6-dev libfontconfig-dev libfribidi-dev \
-            libharfbuzz-dev libssl-dev libxml2-dev libbz2-dev libz-dev \
-            zlib1g-dev liblzma-dev libdav1d-dev libaom-dev libsvtav1-dev \
-            libvmaf-dev libvorbis-dev libopus-dev libspeex-dev libtheora-dev \
-            libopenjp2-7-dev libsnappy-dev libsoxr-dev libvidstab-dev \
-            libx264-dev libx265-dev libnuma-dev libvpx-dev libwebp-dev \
-            libxvidcore-dev libgsm1-dev libshine-dev libtwolame-dev \
-            libmysofa-dev liblilv-dev libsrt-openssl-dev librist-dev \
-            libopenal-dev libpulse-dev libjack-dev libsndio-dev \
-            libsamplerate0-dev librubberband-dev libbs2b-dev libzvbi-dev \
-            libaribb24-dev libdrm-dev libva-dev libvdpau-dev \
-            libsixel-dev libshaderc-dev glslang-tools libplacebo-dev \
-            liblcms2-dev libjxl-dev
+          pip3 install --user docutils
 
-      - name: Clone and build latest static FFmpeg
+      # Step 1: Build FFmpeg (latest git)
+      - name: Clone FFmpeg
         run: |
-          git clone --depth=1 --single-branch https://github.com/FFmpeg/FFmpeg.git ffmpeg-src
-          cd ffmpeg-src
+          git clone --depth 1 https://git.ffmpeg.org/ffmpeg.git ffmpeg
 
+      - name: Configure FFmpeg
+        working-directory: ffmpeg
+        run: |
           ./configure \
-            --prefix=/ffmpeg-install \
-            --pkg-config-flags="--static" \
-            --extra-cflags="-I/ffmpeg-install/include" \
-            --extra-ldflags="-L/ffmpeg-install/lib" \
-            --extra-libs="-lpthread -lm" \
-            --ld="g++" \
-            --bindir=/ffmpeg-install/bin \
+            --prefix=/usr/local \
             --enable-gpl \
-            --enable-gnutls \
+            --enable-version3 \
+            --enable-nonfree \
+            --enable-shared \
+            --enable-static \
             --enable-libass \
             --enable-libfreetype \
             --enable-libfribidi \
             --enable-libharfbuzz \
             --enable-libfontconfig \
-            --enable-openssl \
-            --enable-libaom \
-            --enable-libdav1d \
-            --enable-libsvtav1 \
-            --enable-libvmaf \
-            --enable-libvorbis \
-            --enable-libopus \
-            --enable-libspeex \
-            --enable-libtheora \
-            --enable-libvpx \
-            --enable-libwebp \
+            --enable-libvulkan \
+            --enable-libdrm \
+            --enable-libv4l2 \
+            --enable-libpulse \
+            --enable-libpipewire \
+            --enable-libvdpau \
+            --enable-libva \
+            --enable-libbluray \
+            --enable-libdvdnav \
+            --enable-libcdio \
+            --enable-libzimg \
+            --enable-librubberband \
+            --enable-libxcb \
+            --enable-libxcb-shm \
+            --enable-libxcb-xfixes \
+            --enable-libxcb-shape \
             --enable-libx264 \
             --enable-libx265 \
-            --enable-libxvid \
-            --enable-libzimg \
-            --enable-libplacebo \
-            --enable-vulkan \
-            --enable-vaapi \
-            --enable-vdpau \
-            --enable-libdrm \
-            --enable-libsrt \
-            --enable-librist \
-            --enable-libmysofa \
-            --enable-libopenal \
-            --enable-libpulse \
-            --enable-libjack \
-            --enable-libsndio \
-            --enable-librubberband \
-            --enable-libbs2b \
-            --enable-libzvbi \
-            --enable-libaribb24 \
-            --enable-static \
-            --disable-shared
+            --enable-libvpx \
+            --enable-libmp3lame \
+            --enable-libopus \
+            --enable-libvorbis \
+            --enable-libtheora \
+            --enable-libwebp \
+            --enable-libxml2 \
+            --enable-openssl \
+            --enable-pic \
+            --extra-cflags="-fPIC" \
+            --extra-ldflags="-fPIC"
 
+      - name: Build FFmpeg
+        working-directory: ffmpeg
+        run: |
           make -j$(nproc)
-          make install
 
-          # Create version file
-          ./ffmpeg -version > /ffmpeg-install/ffmpeg-version.txt
-          git rev-parse --short HEAD > /ffmpeg-install/ffmpeg-git-short.txt
-
-      - name: Package FFmpeg artifact
+      - name: Install FFmpeg
+        working-directory: ffmpeg
         run: |
-          cd /ffmpeg-install
-          tar -czf ${{ github.workspace }}/ffmpeg-linux-x86_64-static.tar.gz \
-            bin/ffmpeg \
-            bin/ffprobe \
-            ffmpeg-version.txt \
-            ffmpeg-git-short.txt
+          sudo make install
+          sudo ldconfig
 
-      - name: Upload FFmpeg artifact
+      # Step 2: Build mpv (latest commit)
+      - name: Clone mpv
+        run: |
+          git clone --depth 1 https://github.com/mpv-player/mpv.git mpv
+
+      - name: Build mpv dependencies (libplacebo)
+        run: |
+          git clone --depth 1 https://code.videolan.org/videolan/libplacebo.git
+          cd libplacebo
+          meson setup build --prefix=/usr/local --buildtype=release
+          ninja -C build
+          sudo ninja -C build install
+          cd ..
+
+      - name: Build mpv
+        working-directory: mpv
+        run: |
+          ./bootstrap.py
+          ./waf configure \
+            --prefix=/usr/local \
+            --enable-libmpv-shared \
+            --enable-lua \
+            --enable-libarchive \
+            --enable-libbluray \
+            --enable-dvdnav \
+            --enable-cdda \
+            --enable-uchardet \
+            --enable-rubberband \
+            --enable-zsh-comp \
+            --enable-pulse \
+            --enable-pipewire \
+            --enable-jack \
+            --enable-openal \
+            --enable-sdl2 \
+            --enable-vdpau \
+            --enable-vaapi \
+            --enable-vulkan \
+            --enable-wayland \
+            --enable-x11 \
+            --enable-shaderc \
+            --enable-lcms2 \
+            --enable-libplacebo \
+            --enable-d3d-hwaccel \
+            --enable-d3d11 \
+            --enable-egl \
+            --enable-egl-angle-lib \
+            --enable-egl-angle-win32 \
+            --enable-plain-gl
+          ./waf build -j$(nproc)
+
+      - name: Install mpv
+        working-directory: mpv
+        run: |
+          sudo ./waf install
+          sudo ldconfig
+
+      # Verification steps
+      - name: Verify FFmpeg installation
+        run: |
+          ffmpeg -version
+          ffprobe -version
+
+      - name: Verify mpv installation
+        run: |
+          mpv --version
+
+      # Package binaries for artifact upload
+      - name: Gather binaries
+        run: |
+          mkdir -p artifacts/bin
+          mkdir -p artifacts/lib
+          
+          # Copy binaries
+          which ffmpeg ffprobe mpv | xargs -I {} cp {} artifacts/bin/
+          
+          # Copy shared libraries
+          ldd $(which mpv) | grep "=> /" | awk '{print $3}' | xargs -I {} cp {} artifacts/lib/ 2>/dev/null || true
+          
+          # Create version info file
+          echo "Build Date: $(date)" > artifacts/VERSION.txt
+          echo "FFmpeg Commit: $(cd ffmpeg && git rev-parse HEAD)" >> artifacts/VERSION.txt
+          echo "mpv Commit: $(cd mpv && git rev-parse HEAD)" >> artifacts/VERSION.txt
+          ffmpeg -version | head -n1 >> artifacts/VERSION.txt
+          mpv --version | head -n1 >> artifacts/VERSION.txt
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ffmpeg-linux-x86_64-static
-          path: ffmpeg-linux-x86_64-static.tar.gz
-          retention-days: 7
+          name: mpv-ffmpeg-${{ matrix.os }}-${{ matrix.arch }}-${{ github.sha }}
+          path: artifacts/
+          retention-days: 30
 
-      - name: Install mpv-specific dependencies (if not already covered)
-        run: |
-          sudo apt-get install -y --no-install-recommends \
-            libluajit-5.1-dev libx11-dev libxext-dev libxpresent-dev \
-            libxscrnsaver-dev libxv-dev libx11-xcb-dev libxcb1-dev \
-            libxcb-shm0-dev libxcb-xfixes0-dev libxcb-present-dev \
-            libxkbcommon-dev libwayland-dev wayland-protocols \
-            libshaderc-dev glslang-tools
+  # Optional: Create a release with the built binaries
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
 
-      - name: Clone latest mpv source
-        run: |
-          git clone --depth=1 --single-branch https://github.com/mpv-player/mpv.git mpv-src
-
-      - name: Configure mpv with custom FFmpeg
-        working-directory: mpv-src
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
         env:
-          PKG_CONFIG_PATH: /ffmpeg-install/lib/pkgconfig
-        run: |
-          meson setup build \
-            --buildtype=release \
-            --strip=true \
-            -Db_lto=true \
-            -Ddefault_library=shared \
-            -Dcplayer=true \
-            -Dlibmpv=true \
-            -Dman=true \
-            -Dtests=false \
-            -Dgl=enabled \
-            -Dvulkan=enabled \
-            -Dwayland=enabled \
-            -Dx11=enabled \
-            -Dsixel=enabled \
-            -Dlibplacebo=enabled \
-            -Dshaderc=enabled \
-            -Ddrm=enabled \
-            -Dvaapi=enabled \
-            -Dvdpau=enabled \
-            -Dplain=enabled \
-            -Djavascript=enabled \
-            -Dswift-static=disabled
-
-      - name: Compile mpv
-        working-directory: mpv-src
-        run: meson compile -C build -j$(nproc)
-
-      - name: Install mpv to staging directory
-        working-directory: mpv-src
-        run: |
-          mkdir -p ../artifact/bin
-          meson install -C build --destdir=../../artifact --no-rebuild --skip-subprojects
-
-      - name: Create mpv version stamp
-        working-directory: mpv-src/build
-        run: |
-          ./mpv --version > ../../artifact/mpv-version.txt
-          git -C ../../mpv-src rev-parse --short HEAD > ../../artifact/mpv-git-short.txt
-
-      - name: Package mpv artifact
-        run: |
-          cd artifact
-          tar -czf ../mpv-linux-x86_64.tar.gz \
-            bin/mpv \
-            bin/mpvidentify.sh \
-            bin/umpv \
-            mpv-version.txt \
-            mpv-git-short.txt
-
-      - name: Upload mpv artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mpv-linux-x86_64
-          path: mpv-linux-x86_64.tar.gz
-          retention-days: 7
-
-      # Optional: create a release only on manual trigger
-      - name: Create GitHub Release (manual trigger)
-        if: github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: nightly-${{ github.run_number }}
-          name: mpv + ffmpeg nightly Linux build
-          body: |
-            FFmpeg: $(cat /ffmpeg-install/ffmpeg-git-short.txt)
-            mpv:    $(cat artifact/mpv-git-short.txt)
-            Built on $(date -u +"%Y-%m-%d %H:%M UTC")
-          files: |
-            ffmpeg-linux-x86_64-static.tar.gz
-            mpv-linux-x86_64.tar.gz
-          generate_release_notes: false
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
