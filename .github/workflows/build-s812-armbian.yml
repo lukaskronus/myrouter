@@ -12,7 +12,7 @@ on:
         required: true
         default: 'current'
       release:
-        description: 'Userspace release (bookworm for Debian)'
+        description: 'Userspace release (bookworm preferred for Debian)'
         required: true
         default: 'bookworm'
       minimal:
@@ -30,7 +30,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout custom Armbian build repository
@@ -54,8 +54,7 @@ jobs:
             libfdt-dev libelf-dev \
             qemu-user-static binfmt-support
 
-          # Fix common containerd conflict and start Docker
-          sudo apt-get remove -y --purge containerd || true
+          # Ensure Docker service is running
           sudo systemctl start docker
           sudo systemctl enable docker
           sudo usermod -aG docker $USER
@@ -66,12 +65,12 @@ jobs:
       - name: Prepare build environment
         working-directory: ./build-armbian
         run: |
-          # Install Python requirements if the file exists
+          # Install Python requirements if present
           if [ -f requirements.txt ]; then
             python3 -m pip install --user -r requirements.txt
           fi
 
-          # Make sure compile scripts are executable
+          # Make compile scripts executable
           chmod +x compile.sh compile_s812.sh compile_s812_dev.sh postbuild.sh || true
 
       - name: Build Armbian image
@@ -79,7 +78,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-            echo "Using standard compile.sh with Docker"
+            echo "Executing standard compile.sh with Docker support"
             ./compile.sh \
               BOARD=${{ github.event.inputs.board || 's812' }} \
               BRANCH=${{ github.event.inputs.branch || 'current' }} \
