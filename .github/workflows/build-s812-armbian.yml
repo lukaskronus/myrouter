@@ -79,6 +79,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+            echo "Using standard compile.sh with Docker"
             ./compile.sh \
               BOARD=${{ github.event.inputs.board || 's812' }} \
               BRANCH=${{ github.event.inputs.branch || 'current' }} \
