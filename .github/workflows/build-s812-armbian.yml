@@ -1,44 +1,97 @@
-name: Build Legacy S812 (SLAzurin)
-on: workflow_dispatch
+name: Build Armbian (s8xx custom)
+
+on:
+  workflow_dispatch:
+    inputs:
+      board:
+        description: 'Target board (e.g., s812, or other supported in userpatches)'
+        required: true
+        default: 's812'
+      branch:
+        description: 'Armbian kernel branch (current, edge, etc.)'
+        required: true
+        default: 'current'
+      release:
+        description: 'Userspace release (bookworm for Debian, jammy for Ubuntu)'
+        required: true
+        default: 'bookworm'   # Debian 12 preference
+      minimal:
+        description: 'Build minimal image (yes/no)'
+        required: false
+        default: 'yes'
+      desktop:
+        description: 'Build desktop image (yes/no)'
+        required: false
+        default: 'no'
+      kernel_configure:
+        description: 'Run kernel configuration menu (yes/no)'
+        required: false
+        default: 'no'
 
 jobs:
-  build:
-    runs-on: ubuntu-22.04 # Older runner for better compatibility with 2024/2025 legacy code
-    steps:
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          df -h
-      
-      - name: Maximize Disk Space
-        uses: easimon/maximize-build-space@master
-        with:
-          root-reserve-mb: 5120
-          swap-size-mb: 1024
-          remove-dotnet: 'true'
+  build-armbian:
+    runs-on: ubuntu-24.04   # Debian-based runner (preferred over ubuntu-22.04)
 
-      - name: Checkout SLAzurin Fork
+    steps:
+      - name: Checkout custom Armbian build repository
         uses: actions/checkout@v4
         with:
           repository: SLAzurin/build-armbian-custom
-          ref: s8xx-2025-02-27 # The exact branch
-          path: build
+          ref: s8xx-2025-02-27
+          path: build-armbian
 
-      - name: Install Dependencies
+      - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git qemu-user-static rsync
+          sudo apt-get install -y \
+            git build-essential debhelper fakeroot \
+            python3 python3-pip python3-venv \
+            docker.io docker-buildx-plugin \
+            ccache distcc bc bison flex libssl-dev \
+            u-boot-tools device-tree-compiler \
+            swig python3-dev libncurses5-dev \
+            parted dosfstools uuid-runtime \
+            libfdt-dev libelf-dev \
+            qemu-user-static binfmt-support
+          
+          # Enable Docker (required by many Armbian build steps)
+          sudo systemctl start docker
+          sudo usermod -aG docker $USER
 
-      - name: Execute Build
+      - name: Prepare environment
+        working-directory: ./build-armbian
         run: |
-          cd build
-            ./compile.sh BOARD=aml-s812 BRANCH=current RELEASE=bookworm BUILD_MINIMAL=yes BUILD_DESKTOP=no
+          # Optional: Install Python requirements if present
+          if [ -f requirements.txt ]; then
+            python3 -m pip install --user -r requirements.txt
+          fi
+          
+          # Make scripts executable
+          chmod +x compile.sh compile_s812.sh compile_s812_dev.sh postbuild.sh || true
 
-      - name: Upload Image
+      - name: Build Armbian image
+        working-directory: ./build-armbian
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./compile.sh \
+            BOARD=${{ github.event.inputs.board || 's812' }} \
+            BRANCH=${{ github.event.inputs.branch || 'current' }} \
+            RELEASE=${{ github.event.inputs.release || 'bookworm' }} \
+            BUILD_MINIMAL=${{ github.event.inputs.minimal || 'yes' }} \
+            BUILD_DESKTOP=${{ github.event.inputs.desktop || 'no' }} \
+            KERNEL_CONFIGURE=${{ github.event.inputs.kernel_configure || 'no' }} \
+            EXPERT="yes" \
+            ARTIFACT_IGNORE="no" \
+            --docker || true   # Use Docker if the script supports it; fallback to native
+
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: S812-Legacy-Image
-          path: build/output/images/*.img.xz
+          name: armbian-s8xx-image
+          path: |
+            ./build-armbian/output/images/*.img*
+            ./build-armbian/output/images/*.xz
+            ./build-armbian/output/debs/*.deb
+          if-no-files-found: warn
+          retention-days: 7
