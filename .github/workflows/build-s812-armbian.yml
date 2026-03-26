@@ -1,20 +1,20 @@
-name: Build Armbian (s8xx custom)
+name: Build Armbian s8xx Custom
 
 on:
   workflow_dispatch:
     inputs:
       board:
-        description: 'Target board (e.g., s812, or other supported in userpatches)'
+        description: 'Target board (e.g. s812)'
         required: true
         default: 's812'
       branch:
-        description: 'Armbian kernel branch (current, edge, etc.)'
+        description: 'Kernel branch (current, edge, etc.)'
         required: true
         default: 'current'
       release:
-        description: 'Userspace release (bookworm for Debian, jammy for Ubuntu)'
+        description: 'Userspace release (bookworm preferred for Debian)'
         required: true
-        default: 'bookworm'   # Debian 12 preference
+        default: 'bookworm'
       minimal:
         description: 'Build minimal image (yes/no)'
         required: false
@@ -24,13 +24,13 @@ on:
         required: false
         default: 'no'
       kernel_configure:
-        description: 'Run kernel configuration menu (yes/no)'
+        description: 'Run kernel menuconfig (yes/no)'
         required: false
         default: 'no'
 
 jobs:
-  build-armbian:
-    runs-on: ubuntu-24.04   # Debian-based runner (preferred over ubuntu-22.04)
+  build:
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout custom Armbian build repository
@@ -40,33 +40,37 @@ jobs:
           ref: s8xx-2025-02-27
           path: build-armbian
 
-      - name: Install build dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             git build-essential debhelper fakeroot \
             python3 python3-pip python3-venv \
-            docker.io docker-buildx-plugin \
-            ccache distcc bc bison flex libssl-dev \
+            docker.io \
+            ccache bc bison flex libssl-dev \
             u-boot-tools device-tree-compiler \
             swig python3-dev libncurses5-dev \
             parted dosfstools uuid-runtime \
             libfdt-dev libelf-dev \
             qemu-user-static binfmt-support
-          
-          # Enable Docker (required by many Armbian build steps)
+
+          # Enable and start Docker service
           sudo systemctl start docker
+          sudo systemctl enable docker
           sudo usermod -aG docker $USER
 
-      - name: Prepare environment
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Prepare build environment
         working-directory: ./build-armbian
         run: |
-          # Optional: Install Python requirements if present
+          # Install Python requirements if present
           if [ -f requirements.txt ]; then
             python3 -m pip install --user -r requirements.txt
           fi
-          
-          # Make scripts executable
+
+          # Ensure scripts are executable
           chmod +x compile.sh compile_s812.sh compile_s812_dev.sh postbuild.sh || true
 
       - name: Build Armbian image
@@ -74,16 +78,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./compile.sh \
-            BOARD=${{ github.event.inputs.board || 's812' }} \
-            BRANCH=${{ github.event.inputs.branch || 'current' }} \
-            RELEASE=${{ github.event.inputs.release || 'bookworm' }} \
-            BUILD_MINIMAL=${{ github.event.inputs.minimal || 'yes' }} \
-            BUILD_DESKTOP=${{ github.event.inputs.desktop || 'no' }} \
-            KERNEL_CONFIGURE=${{ github.event.inputs.kernel_configure || 'no' }} \
-            EXPERT="yes" \
-            ARTIFACT_IGNORE="no" \
-            --docker || true   # Use Docker if the script supports it; fallback to native
+            ./compile.sh \
+              BOARD=${{ github.event.inputs.board || 's812' }} \
+              BRANCH=${{ github.event.inputs.branch || 'current' }} \
+              RELEASE=${{ github.event.inputs.release || 'bookworm' }} \
+              BUILD_MINIMAL=${{ github.event.inputs.minimal || 'yes' }} \
+              BUILD_DESKTOP=${{ github.event.inputs.desktop || 'no' }} \
+              KERNEL_CONFIGURE=${{ github.event.inputs.kernel_configure || 'no' }} \
+              EXPERT="yes" \
+              --docker
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
