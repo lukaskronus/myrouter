@@ -1,229 +1,43 @@
-name: Build mpv and FFmpeg (Latest Commit)
-
-on:
-  workflow_dispatch:
+name: Build Legacy S812 (SLAzurin)
+on: workflow_dispatch
 
 jobs:
   build:
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
-        arch: [x86_64]
-        # Add arm64 support if needed
-        # include:
-        #   - os: ubuntu-24.04-arm
-        #     arch: arm64
-
+    runs-on: ubuntu-22.04 # Older runner for better compatibility with 2024/2025 legacy code
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Maximize Disk Space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 5120
+          swap-size-mb: 1024
+          remove-dotnet: 'true'
 
-      - name: Install system dependencies
+      - name: Checkout SLAzurin Fork
+        uses: actions/checkout@v4
+        with:
+          repository: SLAzurin/build-armbian-custom
+          ref: s8xx-2025-02-27 # The exact branch
+          path: build
+
+      - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            autoconf automake libtool pkg-config \
-            nasm yasm meson ninja-build \
-            python3 python3-pip \
-            git wget curl cmake \
-            build-essential \
-            libass-dev libfreetype6-dev \
-            libfribidi-dev libharfbuzz-dev \
-            libfontconfig1-dev \
-            libvulkan-dev libx11-dev \
-            libxcb-shm0-dev libxcb-xfixes0-dev \
-            libxcb-shape0-dev libxcb1-dev \
-            libxv-dev libxrandr-dev \
-            libpulse-dev libpipewire-0.3-dev \
-            libjpeg-dev libpng-dev \
-            libva-dev libvdpau-dev \
-            libdrm-dev libgbm-dev \
-            liblua5.2-dev libluajit-5.1-dev \
-            libuchardet-dev \
-            libbluray-dev libdvdnav-dev \
-            libcdio-paranoia-dev \
-            libsdl2-dev \
-            libv4l-dev libalsa-ocaml-dev \
-            ladspa-sdk \
-            rubberband-cli \
-            libzimg-dev \
-            wayland-protocols
+          sudo apt-get install -y git qemu-user-static rsync
 
-      - name: Install Python packages
+      - name: Execute Build
         run: |
-          pip3 install --user docutils
+          cd build
+          # SLAzurin often includes a custom script like compile_s812.sh
+          # If it exists, use it. Otherwise, use the standard one with his board config.
+          if [ -f "compile_s812.sh" ]; then
+            chmod +x compile_s812.sh
+            ./compile_s812.sh
+          else
+            ./compile.sh BOARD=aml-s812 BRANCH=current RELEASE=bookworm BUILD_MINIMAL=yes BUILD_DESKTOP=no
+          fi
 
-      # Step 1: Build FFmpeg (latest git)
-      - name: Clone FFmpeg
-        run: |
-          git clone --depth 1 https://git.ffmpeg.org/ffmpeg.git ffmpeg
-
-      - name: Configure FFmpeg
-        working-directory: ffmpeg
-        run: |
-          ./configure \
-            --prefix=/usr/local \
-            --enable-gpl \
-            --enable-version3 \
-            --enable-nonfree \
-            --enable-shared \
-            --enable-static \
-            --enable-libass \
-            --enable-libfreetype \
-            --enable-libfribidi \
-            --enable-libharfbuzz \
-            --enable-libfontconfig \
-            --enable-libvulkan \
-            --enable-libdrm \
-            --enable-libv4l2 \
-            --enable-libpulse \
-            --enable-libpipewire \
-            --enable-libvdpau \
-            --enable-libva \
-            --enable-libbluray \
-            --enable-libdvdnav \
-            --enable-libcdio \
-            --enable-libzimg \
-            --enable-librubberband \
-            --enable-libxcb \
-            --enable-libxcb-shm \
-            --enable-libxcb-xfixes \
-            --enable-libxcb-shape \
-            --enable-libx264 \
-            --enable-libx265 \
-            --enable-libvpx \
-            --enable-libmp3lame \
-            --enable-libopus \
-            --enable-libvorbis \
-            --enable-libtheora \
-            --enable-libwebp \
-            --enable-libxml2 \
-            --enable-openssl \
-            --enable-pic \
-            --extra-cflags="-fPIC" \
-            --extra-ldflags="-fPIC"
-
-      - name: Build FFmpeg
-        working-directory: ffmpeg
-        run: |
-          make -j$(nproc)
-
-      - name: Install FFmpeg
-        working-directory: ffmpeg
-        run: |
-          sudo make install
-          sudo ldconfig
-
-      # Step 2: Build mpv (latest commit)
-      - name: Clone mpv
-        run: |
-          git clone --depth 1 https://github.com/mpv-player/mpv.git mpv
-
-      - name: Build mpv dependencies (libplacebo)
-        run: |
-          git clone --depth 1 https://code.videolan.org/videolan/libplacebo.git
-          cd libplacebo
-          meson setup build --prefix=/usr/local --buildtype=release
-          ninja -C build
-          sudo ninja -C build install
-          cd ..
-
-      - name: Build mpv
-        working-directory: mpv
-        run: |
-          ./bootstrap.py
-          ./waf configure \
-            --prefix=/usr/local \
-            --enable-libmpv-shared \
-            --enable-lua \
-            --enable-libarchive \
-            --enable-libbluray \
-            --enable-dvdnav \
-            --enable-cdda \
-            --enable-uchardet \
-            --enable-rubberband \
-            --enable-zsh-comp \
-            --enable-pulse \
-            --enable-pipewire \
-            --enable-jack \
-            --enable-openal \
-            --enable-sdl2 \
-            --enable-vdpau \
-            --enable-vaapi \
-            --enable-vulkan \
-            --enable-wayland \
-            --enable-x11 \
-            --enable-shaderc \
-            --enable-lcms2 \
-            --enable-libplacebo \
-            --enable-d3d-hwaccel \
-            --enable-d3d11 \
-            --enable-egl \
-            --enable-egl-angle-lib \
-            --enable-egl-angle-win32 \
-            --enable-plain-gl
-          ./waf build -j$(nproc)
-
-      - name: Install mpv
-        working-directory: mpv
-        run: |
-          sudo ./waf install
-          sudo ldconfig
-
-      # Verification steps
-      - name: Verify FFmpeg installation
-        run: |
-          ffmpeg -version
-          ffprobe -version
-
-      - name: Verify mpv installation
-        run: |
-          mpv --version
-
-      # Package binaries for artifact upload
-      - name: Gather binaries
-        run: |
-          mkdir -p artifacts/bin
-          mkdir -p artifacts/lib
-          
-          # Copy binaries
-          which ffmpeg ffprobe mpv | xargs -I {} cp {} artifacts/bin/
-          
-          # Copy shared libraries
-          ldd $(which mpv) | grep "=> /" | awk '{print $3}' | xargs -I {} cp {} artifacts/lib/ 2>/dev/null || true
-          
-          # Create version info file
-          echo "Build Date: $(date)" > artifacts/VERSION.txt
-          echo "FFmpeg Commit: $(cd ffmpeg && git rev-parse HEAD)" >> artifacts/VERSION.txt
-          echo "mpv Commit: $(cd mpv && git rev-parse HEAD)" >> artifacts/VERSION.txt
-          ffmpeg -version | head -n1 >> artifacts/VERSION.txt
-          mpv --version | head -n1 >> artifacts/VERSION.txt
-
-      - name: Upload artifacts
+      - name: Upload Image
         uses: actions/upload-artifact@v4
         with:
-          name: mpv-ffmpeg-${{ matrix.os }}-${{ matrix.arch }}-${{ github.sha }}
-          path: artifacts/
-          retention-days: 30
-
-  # Optional: Create a release with the built binaries
-  release:
-    name: Create Release
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: artifacts/**/*
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: S812-Legacy-Image
+          path: build/output/images/*.img.xz
