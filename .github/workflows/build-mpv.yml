@@ -27,14 +27,7 @@ jobs:
       - name: Execute Build
         run: |
           cd build
-          # SLAzurin often includes a custom script like compile_s812.sh
-          # If it exists, use it. Otherwise, use the standard one with his board config.
-          if [ -f "compile_s812.sh" ]; then
-            chmod +x compile_s812.sh
-            ./compile_s812.sh
-          else
             ./compile.sh BOARD=aml-s812 BRANCH=current RELEASE=bookworm BUILD_MINIMAL=yes BUILD_DESKTOP=no
-          fi
 
       - name: Upload Image
         uses: actions/upload-artifact@v4
