@@ -1,4 +1,4 @@
-YAMLname: Build Armbian s8xx Custom
+name: Build Armbian s8xx Custom
 
 on:
   workflow_dispatch:
