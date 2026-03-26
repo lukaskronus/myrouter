@@ -1,4 +1,4 @@
-name: Build Armbian s8xx Custom
+YAMLname: Build Armbian s8xx Custom
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ on:
         required: true
         default: 'current'
       release:
-        description: 'Userspace release (bookworm preferred for Debian)'
+        description: 'Userspace release (bookworm for Debian)'
         required: true
         default: 'bookworm'
       minimal:
@@ -54,7 +54,8 @@ jobs:
             libfdt-dev libelf-dev \
             qemu-user-static binfmt-support
 
-          # Enable and start Docker service
+          # Fix common containerd conflict and start Docker
+          sudo apt-get remove -y --purge containerd || true
           sudo systemctl start docker
           sudo systemctl enable docker
           sudo usermod -aG docker $USER
@@ -65,12 +66,12 @@ jobs:
       - name: Prepare build environment
         working-directory: ./build-armbian
         run: |
-          # Install Python requirements if present
+          # Install Python requirements if the file exists
           if [ -f requirements.txt ]; then
             python3 -m pip install --user -r requirements.txt
           fi
 
-          # Ensure scripts are executable
+          # Make sure compile scripts are executable
           chmod +x compile.sh compile_s812.sh compile_s812_dev.sh postbuild.sh || true
 
       - name: Build Armbian image
