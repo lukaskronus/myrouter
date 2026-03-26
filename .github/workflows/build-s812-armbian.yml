@@ -5,6 +5,14 @@ jobs:
   build:
     runs-on: ubuntu-22.04 # Older runner for better compatibility with 2024/2025 legacy code
     steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          df -h
+      
       - name: Maximize Disk Space
         uses: easimon/maximize-build-space@master
         with:
