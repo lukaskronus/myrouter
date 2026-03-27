@@ -1,101 +1,32 @@
-name: Build Armbian s8xx Custom
-
+name: Build Minix Neo X5 Image
 on:
-  workflow_dispatch:
-    inputs:
-      board:
-        description: 'Target board (e.g. s812)'
-        required: true
-        default: 's812'
-      branch:
-        description: 'Kernel branch (current, edge, etc.)'
-        required: true
-        default: 'current'
-      release:
-        description: 'Userspace release (bookworm preferred for Debian)'
-        required: true
-        default: 'bookworm'
-      minimal:
-        description: 'Build minimal image (yes/no)'
-        required: false
-        default: 'yes'
-      desktop:
-        description: 'Build desktop image (yes/no)'
-        required: false
-        default: 'no'
-      kernel_configure:
-        description: 'Run kernel menuconfig (yes/no)'
-        required: false
-        default: 'no'
+  workflow_dispatch: # This adds a "Play" button so you can start it manually
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
-
+    runs-on: ubuntu-24.04
     steps:
-      - name: Checkout custom Armbian build repository
+      - name: Checkout Armbian Build Framework
         uses: actions/checkout@v4
         with:
-          repository: SLAzurin/build-armbian-custom
-          ref: s8xx-2025-02-27
-          path: build-armbian
+          repository: armbian/build
+          ref: main # Use the latest version
 
-      - name: Install system dependencies
+      - name: Build Armbian Image
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git build-essential debhelper fakeroot \
-            python3 python3-pip python3-venv \
-            docker.io \
-            ccache bc bison flex libssl-dev \
-            u-boot-tools device-tree-compiler \
-            swig python3-dev libncurses5-dev \
-            parted dosfstools uuid-runtime \
-            libfdt-dev libelf-dev \
-            qemu-user-static binfmt-support
+          # We use the MK808 config because it's the closest to the Neo X5
+          ./compile.sh \
+            BOARD=mk808 \
+            BRANCH=current \
+            RELEASE=bookworm \
+            BUILD_MINIMAL=yes \
+            BUILD_DESKTOP=no \
+            KERNEL_ONLY=no \
+            KERNEL_CONFIGURE=no \
+            EXPERT=yes
 
-          # Ensure Docker service is running
-          sudo systemctl start docker
-          sudo systemctl enable docker
-          sudo usermod -aG docker $USER
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Prepare build environment
-        working-directory: ./build-armbian
-        run: |
-          # Install Python requirements if present
-          if [ -f requirements.txt ]; then
-            python3 -m pip install --user -r requirements.txt
-          fi
-
-          # Make compile scripts executable
-          chmod +x compile.sh compile_s812.sh compile_s812_dev.sh postbuild.sh || true
-
-      - name: Build Armbian image
-        working-directory: ./build-armbian
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-            echo "Executing standard compile.sh with Docker support"
-            ./compile.sh \
-              BOARD=${{ github.event.inputs.board || 's812' }} \
-              BRANCH=${{ github.event.inputs.branch || 'current' }} \
-              RELEASE=${{ github.event.inputs.release || 'bookworm' }} \
-              BUILD_MINIMAL=${{ github.event.inputs.minimal || 'yes' }} \
-              BUILD_DESKTOP=${{ github.event.inputs.desktop || 'no' }} \
-              KERNEL_CONFIGURE=${{ github.event.inputs.kernel_configure || 'no' }} \
-              EXPERT="yes" \
-              --docker
-
-      - name: Upload build artifacts
+      - name: Upload Image Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: armbian-s8xx-image
-          path: |
-            ./build-armbian/output/images/*.img*
-            ./build-armbian/output/images/*.xz
-            ./build-armbian/output/debs/*.deb
-          if-no-files-found: warn
-          retention-days: 7
+          name: Minix-Neo-X5-Image
+          path: output/images/*.img.xz
