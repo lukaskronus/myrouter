@@ -14,7 +14,9 @@ jobs:
 
       - name: Build Armbian Image
         run: |
-          # We use the MK808 config because it's the closest to the Neo X5
+          cp config/boards/mk808.csc config/boards/mk808.conf || echo "Already exists"
+
+          # Step 2: Run the build with the EXPERT flag
           ./compile.sh \
             BOARD=mk808 \
             BRANCH=current \
@@ -23,7 +25,8 @@ jobs:
             BUILD_DESKTOP=no \
             KERNEL_ONLY=no \
             KERNEL_CONFIGURE=no \
-            EXPERT=yes
+            EXPERT=yes \
+            SKIP_BOOTSPLASH=yes
 
       - name: Upload Image Artifact
         uses: actions/upload-artifact@v4
