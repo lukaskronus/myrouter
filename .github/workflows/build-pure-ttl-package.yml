@@ -1,0 +1,72 @@
+name: Build Pure TTL Package
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 50
+
+    steps:
+    - name: 1. Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 2. Download Original TTL Package
+      run: |
+        wget --no-check-certificate -c "https://node4.histb.com:9088/update/system/TTL-hi3798mv100-32bit.zip" -O original_ttl.zip
+        unzip -l original_ttl.zip | head -5
+
+    - name: 3. Extract Original Package
+      run: |
+        mkdir -p ttl_template
+        unzip -q original_ttl.zip -d ttl_template/
+        ls -la ttl_template/
+
+    - name: 4. Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y qemu-user-static e2fsprogs zip
+
+    - name: 5. Execute Independent Build Script
+      run: |
+        chmod +x build_rootfs.sh
+        ./build_rootfs.sh
+
+    - name: 6. Create Pure Image
+      run: |
+        ORIG_SIZE=$(stat -c%s "ttl_template/rootfs-32.img")
+        echo "Creating image based on original size ($ORIG_SIZE bytes)..."
+        
+        dd if=/dev/zero of=rootfs-32-pure.img bs=1 count=0 seek=$ORIG_SIZE
+        mkfs.ext4 -F -L "rootfs" rootfs-32-pure.img
+        
+        mkdir -p temp_mount
+        sudo mount -o loop rootfs-32-pure.img temp_mount
+        sudo cp -a pure_rootfs/* temp_mount/
+        sync
+        sudo umount temp_mount
+        
+        echo "Image created successfully:"
+        ls -lh rootfs-32-pure.img
+
+    - name: 7. Replace and Package
+      run: |
+        cp -r ttl_template/ final_package/
+        cp rootfs-32-pure.img final_package/rootfs-32.img
+        
+        cd final_package
+        zip -r ../TTL-hi3798mv100-32bit-PURE-$(date +%Y%m%d).zip .
+        cd ..
+        
+        echo "Final Flash Package:"
+        ls -lh TTL-hi3798mv100-32bit-PURE-*.zip
+
+    - name: 8. Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: pure-ttl-package
+        path: |
+          TTL-hi3798mv100-32bit-PURE-*.zip
+          rootfs-32-pure.img
+        retention-days: 7
