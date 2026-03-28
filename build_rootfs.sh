@@ -68,8 +68,12 @@ INNER_EOF
 sudo chmod +x "$CHROOT_SCRIPT"
 sudo cp "$CHROOT_SCRIPT" "$ROOTFS_DIR/tmp/"
 
-# 5. Run the chroot script
-echo "Executing configuration script inside chroot..."
+# 5. Run the chroot second stage and then your script
+echo "Executing second stage debootstrap and configuration..."
+# First, complete the debootstrap installation
+sudo chroot "$ROOTFS_DIR" /debootstrap/debootstrap --second-stage
+
+# Now run your custom script
 sudo chroot "$ROOTFS_DIR" /bin/bash -c "/tmp/chroot_install.sh"
 
 # 6. Unmount virtual filesystems
