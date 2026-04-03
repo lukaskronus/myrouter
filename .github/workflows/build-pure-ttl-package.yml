@@ -32,42 +32,58 @@ jobs:
 
     - name: 5. Build Newer Kernel (V6) from loonpn/ec6108v9c-linux-kernel
       run: |
-        # Create build directory inside workspace (safe location)
         mkdir -p kernel_build
         cd kernel_build
         
-        # Clone the kernel source
         git clone --single-branch --depth=1 https://github.com/loonpn/ec6108v9c-linux-kernel mv100
         cd mv100
         
-        # Copy custom DTS if you have it (optional but recommended)
+        echo "=== Available DTB files ==="
+        ls -1 arch/arm/boot/dts/hi3798mv100*.dtb 2>/dev/null || echo "No hi3798mv100 DTBs found"
+        
+        # Try to copy custom DTS (if you add it later)
         if [ -f "${GITHUB_WORKSPACE}/config_files/hi3798mv100-v6.dts" ]; then
           cp -f "${GITHUB_WORKSPACE}/config_files/hi3798mv100-v6.dts" \
                 arch/arm/boot/dts/hi3798mv100-ec6108v9c.dts
-          echo "Custom DTS applied."
+          echo "Custom DTS copied."
         else
-          echo "No custom DTS found. Using default DTS from the kernel repository."
+          echo "No custom DTS found. Will use the best matching default DTB."
         fi
         
-        # Kernel configuration and build
+        # Configure kernel
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- hi3798mv100_defconfig
+        
+        # Build kernel
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc)
         
-        # Create combined zImage + DTB and then uImage (required for Hi3798MV100)
-        cat arch/arm/boot/zImage arch/arm/boot/dts/hi3798mv100-ec6108v9c.dtb > zImage-dtb
+        # === Create uImage with robust DTB selection ===
+        DTB_FILE=""
+        for dtb in arch/arm/boot/dts/hi3798mv100*.dtb; do
+          if [ -f "$dtb" ]; then
+            DTB_FILE="$dtb"
+            break
+          fi
+        done
+        
+        if [ -z "$DTB_FILE" ]; then
+          echo "ERROR: No hi3798mv100 DTB file found! Build cannot continue."
+          exit 1
+        fi
+        
+        echo "Using DTB: $DTB_FILE"
+        cat arch/arm/boot/zImage "$DTB_FILE" > zImage-dtb
+        
         mkimage -A arm -O linux -T kernel -C none -a 0x2000000 -e 0x2000000 -n linux -d zImage-dtb uImage
         
-        # Build stripped modules and headers
+        # Build modules and headers
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=../kernel_modules modules_install
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_HDR_PATH=../kernel_headers headers_install
         
-        # Package modules + headers
         cd ..
         tar -zcvf linux-build.tar.gz kernel_headers kernel_modules
         
-        # Copy uImage to workspace root so later steps can find it reliably
-        mkdir -p ${GITHUB_WORKSPACE}/new_uImage
-        cp mv100/uImage ${GITHUB_WORKSPACE}/new_uImage
+        # Copy uImage to workspace root
+        cp mv100/uImage ${GITHUB_WORKSPACE}/new_uImage || { echo "ERROR: Failed to copy uImage"; exit 1; }
         
         echo "Kernel build completed successfully."
         echo "Kernel release: $(cat mv100/include/config/kernel.release 2>/dev/null || echo 'unknown')"
