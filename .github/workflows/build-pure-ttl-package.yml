@@ -1,4 +1,4 @@
-name: Build Pure TTL Package
+name: Build Pure TTL Package with New Kernel (V6)
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 50
+    timeout-minutes: 60   # increased slightly for kernel build
 
     steps:
     - name: 1. Checkout Code
@@ -15,7 +15,7 @@ jobs:
     - name: 2. Download Original TTL Package
       run: |
         wget --no-check-certificate -c "https://node4.histb.com:9088/update/system/TTL-hi3798mv100-32bit.zip" -O original_ttl.zip
-        unzip -l original_ttl.zip | head -5
+        unzip -l original_ttl.zip | head -10
 
     - name: 3. Extract Original Package
       run: |
@@ -26,18 +26,66 @@ jobs:
     - name: 4. Install Dependencies
       run: |
         sudo apt-get update
-        # Added debootstrap and qemu-user-static (required for armhf chroot)
-        sudo apt-get install -y qemu-user-static debootstrap e2fsprogs zip
+        sudo apt-get install -y qemu-user-static debootstrap e2fsprogs zip \
+          gcc-arm-linux-gnueabihf u-boot-tools bc bison flex libssl-dev \
+          libncurses5-dev zlib1g-dev
 
-    - name: 5. Execute Independent Build Script
+    - name: 5. Build Newer Kernel (V6) from cndeep/loonpn
+      run: |
+        mkdir -p /builder && sudo chown -R $USER:$USER /builder
+        cd /builder
+        
+        git clone --single-branch --depth=1 https://github.com/loonpn/ec6108v9c-linux-kernel mv100
+        cd mv100
+        
+        # Copy custom DTS from your repository (cndeep style)
+        cp -f ${GITHUB_WORKSPACE}/config_files/hi3798mv100-v6.dts \
+              arch/arm/boot/dts/hi3798mv100-ec6108v9c.dts || echo "Using default DTS"
+        
+        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- hi3798mv100_defconfig
+        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc)
+        
+        # Create uImage (required by most Hi3798MV100 bootloaders)
+        cat arch/arm/boot/zImage arch/arm/boot/dts/hi3798mv100-ec6108v9c.dtb > zImage-dtb
+        mkimage -A arm -O linux -T kernel -C none -a 0x2000000 -e 0x2000000 -n linux -d zImage-dtb uImage
+        
+        # Build and package modules + headers
+        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=kernel_modules modules_install
+        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_HDR_PATH=kernel_headers headers_install
+        
+        tar -zcvf ../linux-build.tar.gz kernel_headers kernel_modules
+        cp uImage ${GITHUB_WORKSPACE}/new_uImage
+        
+        echo "Kernel build completed. Version: $(cat include/config/kernel.release)"
+        ls -lh uImage ../linux-build.tar.gz
+
+    - name: 6. Build Pure Debian 12 Rootfs
       run: |
         chmod +x build_rootfs.sh
         ./build_rootfs.sh
 
-    - name: 6. Create Pure Image
+    - name: 7. Install Kernel Modules into Debian Rootfs
+      run: |
+        ROOTFS_DIR=$(pwd)/pure_rootfs
+        KERNEL_MODULES=/builder/linux-build.tar.gz   # adjust path if needed
+        
+        echo "Installing kernel modules into Debian rootfs..."
+        sudo mkdir -p "$ROOTFS_DIR/lib/modules"
+        sudo tar -xzf "$KERNEL_MODULES" -C /tmp
+        sudo cp -a /tmp/kernel_modules/lib/modules/* "$ROOTFS_DIR/lib/modules/"
+        
+        # Run depmod inside chroot
+        sudo mount -t proc /proc "$ROOTFS_DIR/proc"
+        sudo mount -t sysfs /sys "$ROOTFS_DIR/sys"
+        sudo chroot "$ROOTFS_DIR" depmod -a $(ls "$ROOTFS_DIR/lib/modules/" | head -n1)
+        sudo umount "$ROOTFS_DIR/proc" "$ROOTFS_DIR/sys" || true
+        
+        echo "Kernel modules installed successfully."
+
+    - name: 8. Create Pure Rootfs Image
       run: |
         ORIG_SIZE=$(stat -c%s "ttl_template/rootfs-32.img")
-        echo "Creating image based on original size ($ORIG_SIZE bytes)..."
+        echo "Creating image of size $ORIG_SIZE bytes..."
         
         dd if=/dev/zero of=rootfs-32-pure.img bs=1 count=0 seek=$ORIG_SIZE
         mkfs.ext4 -F -L "rootfs" rootfs-32-pure.img
@@ -48,26 +96,29 @@ jobs:
         sync
         sudo umount temp_mount
         
-        echo "Image created successfully:"
         ls -lh rootfs-32-pure.img
 
-    - name: 7. Replace and Package
+    - name: 9. Replace Kernel and Package Final TTL
       run: |
         cp -r ttl_template/ final_package/
         cp rootfs-32-pure.img final_package/rootfs-32.img
         
+        # Replace old kernel with new uImage (critical step)
+        cp new_uImage final_package/uImage || cp new_uImage final_package/boot/uImage || true
+        
         cd final_package
-        zip -r ../TTL-hi3798mv100-32bit-PURE-$(date +%Y%m%d).zip .
+        zip -r ../TTL-hi3798mv100-32bit-PURE-KernelV6-$(date +%Y%m%d).zip .
         cd ..
         
-        echo "Final Flash Package:"
-        ls -lh TTL-hi3798mv100-32bit-PURE-*.zip
+        echo "Final package created:"
+        ls -lh TTL-hi3798mv100-32bit-PURE-KernelV6-*.zip
 
-    - name: 8. Upload Artifacts
+    - name: 10. Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: pure-ttl-package
+        name: pure-ttl-package-with-v6-kernel
         path: |
-          TTL-hi3798mv100-32bit-PURE-*.zip
+          TTL-hi3798mv100-32bit-PURE-KernelV6-*.zip
+          new_uImage
           rootfs-32-pure.img
         retention-days: 7
