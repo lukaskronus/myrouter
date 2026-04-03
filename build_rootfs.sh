@@ -57,7 +57,7 @@ echo -e "auto eth0\niface eth0 inet dhcp" > /etc/network/interfaces.d/eth0
 echo "T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100" >> /etc/inittab
 
 # Enable necessary modules
-apt-get install -y initramfs-tools kmod sudo nano curl ca-certificates openssh-server htop
+apt-get install -y initramfs-tools kmod sudo nano curl ca-certificates openssh-server htop binutils bsdmainutils
 update-initramfs -u -k all || true
 
 # Cleanup

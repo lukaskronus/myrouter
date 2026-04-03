@@ -51,53 +51,53 @@ jobs:
           echo "Will use default kernel DTS"
         fi
         
-        echo "=== Verifying DTS files ==="
-        ls -lh arch/arm/boot/dts/hi3798mv100*.dts
-        
         echo "=== Configuring kernel ==="
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- hi3798mv100_defconfig
         
         echo "=== Applying boot compatibility patches ==="
-        # Disable Thumb2 (ensure ARM mode, not Thumb)
+        # Match old kernel settings
         sed -i 's/CONFIG_THUMB2_KERNEL=y/CONFIG_THUMB2_KERNEL=n/' .config
-        
-        # Disable unaligned memory access
         sed -i 's/CONFIG_ALLOW_UNALIGNED_ACCESS=y/CONFIG_ALLOW_UNALIGNED_ACCESS=n/' .config
-        
-        # Ensure proper MMU settings
-        sed -i 's/CONFIG_MMU=.*/CONFIG_MMU=y/' .config
-        
-        # Disable advanced CPU features that might not be compatible
         sed -i 's/CONFIG_NEON=y/CONFIG_NEON=n/' .config
         sed -i 's/CONFIG_VFPv3=y/CONFIG_VFPv3=n/' .config
         
-        # Use legacy bootloader support
+        # Kernel compression - disable compression
+        sed -i 's/CONFIG_KERNEL_GZIP=y/CONFIG_KERNEL_GZIP=n/' .config
+        sed -i 's/CONFIG_KERNEL_BZIP2=y/CONFIG_KERNEL_BZIP2=n/' .config
+        sed -i 's/CONFIG_KERNEL_LZO=y/CONFIG_KERNEL_LZO=n/' .config
+        sed -i 's/CONFIG_KERNEL_LZMA=y/CONFIG_KERNEL_LZMA=n/' .config
+        sed -i 's/CONFIG_KERNEL_XZ=y/CONFIG_KERNEL_XZ=n/' .config
+        
+        # Use ATAGS (legacy bootloader)
         sed -i 's/CONFIG_ATAGS=.*/CONFIG_ATAGS=y/' .config
         sed -i 's/CONFIG_CMDLINE_FROM_BOOTLOADER=.*/CONFIG_CMDLINE_FROM_BOOTLOADER=y/' .config
         
         echo "Kernel configuration completed"
         echo ""
         echo "=== Critical Boot Configuration ==="
-        grep -E "CONFIG_THUMB2_KERNEL|CONFIG_ALLOW_UNALIGNED|CONFIG_MMU|CONFIG_ATAGS|CONFIG_CMDLINE" .config
+        grep -E "CONFIG_THUMB2_KERNEL|CONFIG_KERNEL_GZIP|CONFIG_KERNEL_BZIP2|CONFIG_ATAGS|CONFIG_CMDLINE" .config | sort
 
-    - name: 5.3. Build Kernel
+    - name: 5.3. Build Kernel - Generate Uncompressed Image
       run: |
         cd kernel_build/mv100
+        
         echo "Building kernel with $(nproc) CPU cores..."
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc) 2>&1 | tee build.log
         echo "Kernel build completed"
         
-        # Check for build warnings/errors
-        if grep -i "error" build.log; then
-          echo "WARNING: Build errors detected"
+        # The key: we need Image (uncompressed), not zImage (compressed)
+        if [ ! -f "arch/arm/boot/Image" ]; then
+          echo "ERROR: Uncompressed Image not found! Attempting to build it..."
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- Image
         fi
         
-        # Verify zImage exists
-        if [ ! -f "arch/arm/boot/zImage" ]; then
-          echo "ERROR: zImage not found!"
+        if [ ! -f "arch/arm/boot/Image" ]; then
+          echo "ERROR: Image not found!"
           exit 1
         fi
-        ls -lh arch/arm/boot/zImage
+        
+        ls -lh arch/arm/boot/Image
+        file arch/arm/boot/Image
 
     - name: 5.4. Build Kernel Modules and Headers
       run: |
@@ -111,35 +111,44 @@ jobs:
         
         echo "Modules and headers completed"
         ls -lah ../kernel_modules/lib/modules/ 2>/dev/null | head -15
-        ls -lah ../kernel_headers/include/ 2>/dev/null | head -15
 
-    - name: 5.5. Create uImage (WITHOUT DTB - bootloader provides via ATAGS)
+    - name: 5.5. Create uImage - UNCOMPRESSED Kernel (Match Old Kernel Format)
       run: |
         cd kernel_build/mv100
         
-        if [ ! -f "arch/arm/boot/zImage" ]; then
-          echo "ERROR: zImage not found!"
+        if [ ! -f "arch/arm/boot/Image" ]; then
+          echo "ERROR: Uncompressed Image not found!"
           exit 1
         fi
         
-        echo "Creating uImage from zImage alone (DTB provided by bootloader via ATAGS)..."
-        echo "  Load Address: 0x1FFFFC0 (matches bootloader: mmc read 0 0x1FFFFC0)"
-        echo "  Entry Point: 0x1FFFFC0"
+        echo "Creating uImage from UNCOMPRESSED Image (matches old kernel format)..."
+        echo "  Load Address: 0x2000000"
+        echo "  Entry Point: 0x2000000"
+        echo "  Compression: None"
         
-        mkimage -A arm -O linux -T kernel -C none -a 0x1FFFFC0 -e 0x1FFFFC0 -n linux -d arch/arm/boot/zImage uImage
+        mkimage -A arm -O linux -T kernel -C none -a 0x2000000 -e 0x2000000 -n linux -d arch/arm/boot/Image uImage
         
         if [ ! -f "uImage" ]; then
           echo "ERROR: uImage was not created!"
           exit 1
         fi
         
-        echo "uImage created successfully"
+        echo ""
+        echo "=== New uImage created successfully ==="
         ls -lh uImage
         
         echo ""
+        echo "=== Comparing with old kernel ==="
+        echo "Old kernel: 10862583 bytes"
+        echo "New kernel: $(stat -c%s uImage) bytes"
+        
+        echo ""
         echo "=== uImage Header ==="
+        hexdump -C uImage | head -10
+        
+        echo ""
+        echo "=== Verification ==="
         file uImage
-        hexdump -C uImage | head -20
 
     - name: 5.6. Package Kernel Build Artifacts
       run: |
