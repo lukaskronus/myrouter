@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 60   # increased slightly for kernel build
+    timeout-minutes: 60
 
     steps:
     - name: 1. Checkout Code
@@ -30,14 +30,17 @@ jobs:
           gcc-arm-linux-gnueabihf u-boot-tools bc bison flex libssl-dev \
           libncurses5-dev zlib1g-dev
 
-    - name: 5. Build Newer Kernel (V6) from loonpn/ec6108v9c-linux-kernel
+    - name: 5.1. Clone Kernel Repository
       run: |
         mkdir -p kernel_build
         cd kernel_build
-        
         git clone --single-branch --depth=1 https://github.com/loonpn/ec6108v9c-linux-kernel mv100
-        cd mv100
-        
+        echo "Kernel repository cloned successfully"
+        ls -la mv100/
+
+    - name: 5.2. Prepare Kernel Configuration
+      run: |
+        cd kernel_build/mv100
         echo "=== Available DTB files ==="
         ls -1 arch/arm/boot/dts/hi3798mv100*.dtb 2>/dev/null || echo "No hi3798mv100 DTBs found"
         
@@ -52,42 +55,147 @@ jobs:
         
         # Configure kernel
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- hi3798mv100_defconfig
-        
-        # Build kernel
+        echo "Kernel configuration completed"
+
+    - name: 5.3. Build Kernel
+      run: |
+        cd kernel_build/mv100
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc)
+        echo "Kernel build completed"
         
-        # === Create uImage with robust DTB selection ===
+        # Verify zImage exists
+        if [ ! -f "arch/arm/boot/zImage" ]; then
+          echo "ERROR: zImage not found!"
+          exit 1
+        fi
+        ls -lh arch/arm/boot/zImage
+
+    - name: 5.4. Find and Verify DTB File
+      run: |
+        cd kernel_build/mv100
         DTB_FILE=""
         for dtb in arch/arm/boot/dts/hi3798mv100*.dtb; do
           if [ -f "$dtb" ]; then
             DTB_FILE="$dtb"
+            echo "Found DTB: $DTB_FILE"
             break
           fi
         done
         
         if [ -z "$DTB_FILE" ]; then
-          echo "ERROR: No hi3798mv100 DTB file found! Build cannot continue."
+          echo "ERROR: No hi3798mv100 DTB file found!"
+          echo "Available DTB files:"
+          ls -1 arch/arm/boot/dts/*.dtb 2>/dev/null | head -20
           exit 1
         fi
         
-        echo "Using DTB: $DTB_FILE"
+        ls -lh "$DTB_FILE"
+
+    - name: 5.5. Create zImage-dtb
+      run: |
+        cd kernel_build/mv100
+        DTB_FILE=$(ls -1 arch/arm/boot/dts/hi3798mv100*.dtb | head -1)
+        
+        if [ ! -f "arch/arm/boot/zImage" ]; then
+          echo "ERROR: zImage not found!"
+          exit 1
+        fi
+        
         cat arch/arm/boot/zImage "$DTB_FILE" > zImage-dtb
+        
+        if [ ! -f "zImage-dtb" ]; then
+          echo "ERROR: Failed to create zImage-dtb"
+          exit 1
+        fi
+        
+        echo "zImage-dtb created successfully"
+        ls -lh zImage-dtb
+
+    - name: 5.6. Create uImage
+      run: |
+        cd kernel_build/mv100
+        
+        if [ ! -f "zImage-dtb" ]; then
+          echo "ERROR: zImage-dtb not found!"
+          exit 1
+        fi
         
         mkimage -A arm -O linux -T kernel -C none -a 0x2000000 -e 0x2000000 -n linux -d zImage-dtb uImage
         
-        # Build modules and headers
+        if [ ! -f "uImage" ]; then
+          echo "ERROR: uImage was not created!"
+          echo "mkimage output above for debugging"
+          exit 1
+        fi
+        
+        echo "uImage created successfully"
+        ls -lh uImage
+
+    - name: 5.7. Build Kernel Modules and Headers
+      run: |
+        cd kernel_build/mv100
+        
+        echo "Building kernel modules..."
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=../kernel_modules modules_install
+        
+        echo "Installing kernel headers..."
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_HDR_PATH=../kernel_headers headers_install
         
-        cd ..
+        echo "Modules and headers completed"
+        ls -la ../kernel_modules/ 2>/dev/null | head -10
+        ls -la ../kernel_headers/ 2>/dev/null | head -10
+
+    - name: 5.8. Package Kernel Build Artifacts
+      run: |
+        cd kernel_build
+        
+        if [ ! -d "kernel_modules" ] || [ ! -d "kernel_headers" ]; then
+          echo "ERROR: kernel_modules or kernel_headers directory not found!"
+          exit 1
+        fi
+        
         tar -zcvf linux-build.tar.gz kernel_headers kernel_modules
         
-        # Copy uImage to workspace root
-        cp mv100/uImage ${GITHUB_WORKSPACE}/new_uImage || { echo "ERROR: Failed to copy uImage"; exit 1; }
+        if [ ! -f "linux-build.tar.gz" ]; then
+          echo "ERROR: Failed to create linux-build.tar.gz"
+          exit 1
+        fi
         
-        echo "Kernel build completed successfully."
-        echo "Kernel release: $(cat mv100/include/config/kernel.release 2>/dev/null || echo 'unknown')"
-        ls -lh new_uImage linux-build.tar.gz
+        echo "Build artifacts packaged successfully"
+        ls -lh linux-build.tar.gz
+
+    - name: 5.9. Copy uImage to Workspace
+      run: |
+        cd kernel_build
+        
+        if [ ! -f "mv100/uImage" ]; then
+          echo "ERROR: uImage not found at kernel_build/mv100/uImage"
+          ls -la mv100/ | grep -i image
+          exit 1
+        fi
+        
+        cp mv100/uImage ${GITHUB_WORKSPACE}/new_uImage
+        
+        if [ ! -f "${GITHUB_WORKSPACE}/new_uImage" ]; then
+          echo "ERROR: Failed to copy uImage to workspace"
+          exit 1
+        fi
+        
+        echo "uImage copied to workspace successfully"
+        ls -lh ${GITHUB_WORKSPACE}/new_uImage
+
+    - name: 5.10. Verify Kernel Build
+      run: |
+        echo "=== Kernel Build Summary ==="
+        echo "Kernel release: $(cat kernel_build/mv100/include/config/kernel.release 2>/dev/null || echo 'unknown')"
+        
+        echo ""
+        echo "=== Artifacts ==="
+        ls -lh ${GITHUB_WORKSPACE}/new_uImage
+        ls -lh kernel_build/linux-build.tar.gz
+        
+        echo ""
+        echo "=== Kernel Build Step Completed Successfully ==="
 
     - name: 6. Build Pure Debian 12 Rootfs
       run: |
@@ -97,19 +205,19 @@ jobs:
     - name: 7. Install Kernel Modules into Debian Rootfs
       run: |
         ROOTFS_DIR=$(pwd)/pure_rootfs
-     
+        
         echo "Installing kernel modules into Debian rootfs..."
         sudo mkdir -p "$ROOTFS_DIR/lib/modules"
-     
+        
         sudo tar -xzf kernel_build/linux-build.tar.gz -C /tmp
-     
+        
         sudo cp -a /tmp/kernel_modules/lib/modules/* "$ROOTFS_DIR/lib/modules/" || true
-     
+        
         sudo mount -t proc none "$ROOTFS_DIR/proc" || true
         sudo mount -t sysfs none "$ROOTFS_DIR/sys" || true
         sudo chroot "$ROOTFS_DIR" depmod -a || echo "depmod warnings are normal during cross-build"
         sudo umount "$ROOTFS_DIR/proc" "$ROOTFS_DIR/sys" 2>/dev/null || true
-     
+        
         echo "Kernel modules installed successfully."
 
     - name: 8. Create Pure Rootfs Image
