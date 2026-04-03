@@ -30,15 +30,30 @@ jobs:
           gcc-arm-linux-gnueabihf u-boot-tools bc bison flex libssl-dev \
           libncurses5-dev zlib1g-dev device-tree-compiler
 
-    - name: 5.1. Clone Kernel Repository
-      run: |
-        mkdir -p kernel_build
-        cd kernel_build
-        git clone --single-branch --depth=1 https://github.com/loonpn/ec6108v9c-linux-kernel mv100
-        echo "Kernel repository cloned successfully"
-        ls -la mv100/ | head -20
+    - name: 5.1. Setup Kernel Build Cache
+      uses: actions/cache@v3
+      with:
+        path: kernel_build/mv100
+        key: kernel-v6-${{ hashFiles('config_files/hi3798mv100-v6.dts') }}-${{ runner.os }}
+        restore-keys: |
+          kernel-v6-${{ runner.os }}-
+          kernel-v6-
 
-    - name: 5.2. Prepare Kernel Configuration with Custom DTS
+    - name: 5.2. Clone Kernel Repository (if not cached)
+      run: |
+        if [ ! -d "kernel_build/mv100" ]; then
+          mkdir -p kernel_build
+          cd kernel_build
+          git clone --single-branch --depth=1 https://github.com/loonpn/ec6108v9c-linux-kernel mv100
+          echo "Kernel repository cloned"
+        else
+          echo "Using cached kernel repository"
+          cd kernel_build/mv100
+          git status
+        fi
+        ls -la kernel_build/mv100/ | head -20
+
+    - name: 5.3. Prepare Kernel Configuration with Custom DTS
       run: |
         cd kernel_build/mv100
         
@@ -47,49 +62,31 @@ jobs:
           cp -v "${GITHUB_WORKSPACE}/config_files/hi3798mv100-v6.dts" arch/arm/boot/dts/hi3798mv100-ec6108v9c.dts
           echo "Custom DTS copied successfully"
         else
-          echo "WARNING: Custom DTS not found at config_files/hi3798mv100-v6.dts"
-          echo "Will use default kernel DTS"
+          echo "WARNING: Custom DTS not found"
+          exit 1
         fi
         
         echo "=== Configuring kernel ==="
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- hi3798mv100_defconfig
         
         echo "=== Applying boot compatibility patches ==="
-        # Match old kernel settings
         sed -i 's/CONFIG_THUMB2_KERNEL=y/CONFIG_THUMB2_KERNEL=n/' .config
         sed -i 's/CONFIG_ALLOW_UNALIGNED_ACCESS=y/CONFIG_ALLOW_UNALIGNED_ACCESS=n/' .config
         sed -i 's/CONFIG_NEON=y/CONFIG_NEON=n/' .config
         sed -i 's/CONFIG_VFPv3=y/CONFIG_VFPv3=n/' .config
-        
-        # Kernel compression - disable compression
         sed -i 's/CONFIG_KERNEL_GZIP=y/CONFIG_KERNEL_GZIP=n/' .config
         sed -i 's/CONFIG_KERNEL_BZIP2=y/CONFIG_KERNEL_BZIP2=n/' .config
-        sed -i 's/CONFIG_KERNEL_LZO=y/CONFIG_KERNEL_LZO=n/' .config
-        sed -i 's/CONFIG_KERNEL_LZMA=y/CONFIG_KERNEL_LZMA=n/' .config
-        sed -i 's/CONFIG_KERNEL_XZ=y/CONFIG_KERNEL_XZ=n/' .config
-        
-        # Use ATAGS (legacy bootloader)
         sed -i 's/CONFIG_ATAGS=.*/CONFIG_ATAGS=y/' .config
         sed -i 's/CONFIG_CMDLINE_FROM_BOOTLOADER=.*/CONFIG_CMDLINE_FROM_BOOTLOADER=y/' .config
         
         echo "Kernel configuration completed"
-        echo ""
-        echo "=== Critical Boot Configuration ==="
-        grep -E "CONFIG_THUMB2_KERNEL|CONFIG_KERNEL_GZIP|CONFIG_KERNEL_BZIP2|CONFIG_ATAGS|CONFIG_CMDLINE" .config | sort
 
-    - name: 5.3. Build Kernel - Generate Uncompressed Image
+    - name: 5.4. Build Kernel (with cache)
       run: |
         cd kernel_build/mv100
         
         echo "Building kernel with $(nproc) CPU cores..."
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc) 2>&1 | tee build.log
-        echo "Kernel build completed"
-        
-        # The key: we need Image (uncompressed), not zImage (compressed)
-        if [ ! -f "arch/arm/boot/Image" ]; then
-          echo "ERROR: Uncompressed Image not found! Attempting to build it..."
-          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- Image
-        fi
         
         if [ ! -f "arch/arm/boot/Image" ]; then
           echo "ERROR: Image not found!"
@@ -97,35 +94,12 @@ jobs:
         fi
         
         ls -lh arch/arm/boot/Image
-        file arch/arm/boot/Image
-
-    - name: 5.4. Build Kernel Modules and Headers
-      run: |
-        cd kernel_build/mv100
-        
-        echo "Building kernel modules..."
-        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=../kernel_modules modules_install
-        
-        echo "Installing kernel headers..."
-        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_HDR_PATH=../kernel_headers headers_install
-        
-        echo "Modules and headers completed"
-        ls -lah ../kernel_modules/lib/modules/ 2>/dev/null | head -15
 
     - name: 5.5. Create uImage - UNCOMPRESSED Kernel
       run: |
         cd kernel_build/mv100
         
-        if [ ! -f "arch/arm/boot/Image" ]; then
-          echo "ERROR: Uncompressed Image not found!"
-          exit 1
-        fi
-        
         echo "Creating uImage from UNCOMPRESSED Image..."
-        echo "  Load Address: 0x2000000"
-        echo "  Entry Point: 0x2000000"
-        echo "  Compression: None"
-        
         mkimage -A arm -O linux -T kernel -C none -a 0x2000000 -e 0x2000000 -n linux -d arch/arm/boot/Image uImage
         
         if [ ! -f "uImage" ]; then
@@ -172,135 +146,12 @@ jobs:
         cd kernel_build
         
         tar -zcvf linux-build.tar.gz kernel_headers kernel_modules
-        
-        if [ ! -f "linux-build.tar.gz" ]; then
-          echo "ERROR: Failed to create linux-build.tar.gz"
-          exit 1
-        fi
-        
-        echo "Build artifacts packaged successfully"
         ls -lh linux-build.tar.gz
 
     - name: 5.9. Copy uImage to Workspace
       run: |
-        cd kernel_build
-        
-        cp mv100/uImage ${GITHUB_WORKSPACE}/new_uImage
-        
-        if [ ! -f "${GITHUB_WORKSPACE}/new_uImage" ]; then
-          echo "ERROR: Failed to copy uImage to workspace"
-          exit 1
-        fi
-        
+        cp kernel_build/mv100/uImage ${GITHUB_WORKSPACE}/new_uImage
         ls -lh ${GITHUB_WORKSPACE}/new_uImage
-
-    - name: 5.10. Create Fastboot Setup Instructions
-      run: |
-        cat > ${GITHUB_WORKSPACE}/FASTBOOT_SETUP.txt << 'EOF'
-        ====================================================================
-        FASTBOOT ENVIRONMENT UPDATE INSTRUCTIONS
-        ====================================================================
-        
-        NEW PARTITION LAYOUT:
-        boot:      1MB
-        bootargs:  1MB
-        baseparam: 4MB
-        pqparam:   4MB
-        logo:      4MB
-        kernel:    30MB  (increased from 20MB)
-        busybox:   64MB
-        backup:    256MB (reduced from 512MB)
-        ubuntu:    rest
-        
-        ====================================================================
-        STEP 1: Connect to Fastboot Console
-        ====================================================================
-        
-        1. Connect serial console (115200 baud)
-        2. Power on board
-        3. Press Ctrl+C during boot to get to "fastboot#" prompt
-        
-        ====================================================================
-        STEP 2: Update Environment Variables
-        ====================================================================
-        
-        Copy and paste the following command (all on one line):
-        
-        setenv bootargs model=mv100 console=ttyAMA0,115200 root=/dev/mmcblk0p9 rootfstype=ext4 rootwait blkdevparts=mmcblk0:1M(boot),1M(bootargs),4M(baseparam),4M(pqparam),4M(logo),30M(kernel),64M(busybox),256M(backup),-(ubuntu) mem=1G mmz=ddr,0,0,256M vmalloc=500M
-        
-        Then save:
-        saveenv
-        
-        Verify:
-        printenv bootargs
-        
-        ====================================================================
-        STEP 3: Flash New Kernel
-        ====================================================================
-        
-        Option A: Via TFTP (recommended for faster flashing)
-        
-        # Load via TFTP
-        tftp 0x1000000 new_uImage
-        
-        # Write to kernel partition (30MB at sector 0x7000)
-        mmc write 0 0x1000000 0x7000 0xF000
-        
-        
-        Option B: Manual copy to eMMC via dd
-        
-        # Calculate partition offset: 14MB = 28672 sectors
-        # Calculate size: 30MB = 61440 sectors
-        
-        dd if=new_uImage of=/dev/mmcblk0p6 bs=512
-        
-        
-        ====================================================================
-        STEP 4: Verify and Reboot
-        ====================================================================
-        
-        # Verify kernel was written correctly
-        mmc read 0 0x1000000 0x7000 0x100
-        md 0x1000000 20
-        
-        # Reboot to test
-        reset
-        
-        ====================================================================
-        PARTITION OFFSETS (Sectors, for reference)
-        ====================================================================
-        
-        boot:      0x0000    (0 sectors)
-        bootargs:  0x0800    (2048 sectors)
-        baseparam: 0x1000    (4096 sectors)
-        pqparam:   0x3000    (12288 sectors)
-        logo:      0x5000    (20480 sectors)
-        kernel:    0x7000    (28672 sectors) <- NEW KERNEL OFFSET
-        busybox:   0x1F000   (126976 sectors)
-        backup:    0x33000   (204800 sectors)
-        ubuntu:    0x4D800   (rest)
-        
-        Each sector = 512 bytes
-        
-        ====================================================================
-        ROLLBACK (if needed)
-        ====================================================================
-        
-        If the new kernel doesn't boot, you can rollback:
-        
-        1. Press Ctrl+C to get to fastboot prompt
-        2. Restore old bootargs:
-           setenv bootargs model=mv100 console=ttyAMA0,115200 root=/dev/mmcblk0p9 rootfstype=ext4 rootwait blkdevparts=mmcblk0:1M(boot),1M(bootargs),4M(baseparam),4M(pqparam),4M(logo),20M(kernel),64M(busybox),512M(backup),-(ubuntu) mem=1G mmz=ddr,0,0,256M vmalloc=500M
-           saveenv
-        
-        3. Restore old kernel:
-           mmc read 0 0x1000000 0x7000 0xA000
-           bootm 0x1000000
-        
-        ====================================================================
-        EOF
-        
-        cat ${GITHUB_WORKSPACE}/FASTBOOT_SETUP.txt
 
     - name: 6. Build Pure Debian 12 Rootfs
       run: |
@@ -322,13 +173,10 @@ jobs:
         sudo mount -t sysfs none "$ROOTFS_DIR/sys" || true
         sudo chroot "$ROOTFS_DIR" depmod -a || echo "depmod warnings are normal during cross-build"
         sudo umount "$ROOTFS_DIR/proc" "$ROOTFS_DIR/sys" 2>/dev/null || true
-        
-        echo "Kernel modules installed successfully."
 
     - name: 8. Create Pure Rootfs Image
       run: |
         ORIG_SIZE=$(stat -c%s "ttl_template/rootfs-32.img")
-        echo "Creating image of size $ORIG_SIZE bytes..."
         
         dd if=/dev/zero of=rootfs-32-pure.img bs=1 count=0 seek=$ORIG_SIZE
         mkfs.ext4 -F -L "rootfs" rootfs-32-pure.img
@@ -345,15 +193,12 @@ jobs:
       run: |
         cp -r ttl_template/ final_package/
         cp rootfs-32-pure.img final_package/rootfs-32.img
-        
-        # Replace old kernel with new uImage (critical step)
         cp new_uImage final_package/uImage || cp new_uImage final_package/boot/uImage || true
         
         cd final_package
         zip -r ../TTL-hi3798mv100-32bit-PURE-KernelV6-$(date +%Y%m%d).zip .
         cd ..
         
-        echo "Final package created:"
         ls -lh TTL-hi3798mv100-32bit-PURE-KernelV6-*.zip
 
     - name: 10. Upload Artifacts - Kernel uImage
@@ -377,14 +222,7 @@ jobs:
         path: TTL-hi3798mv100-32bit-PURE-KernelV6-*.zip
         retention-days: 7
 
-    - name: 13. Upload Artifacts - Fastboot Instructions
-      uses: actions/upload-artifact@v4
-      with:
-        name: fastboot-setup
-        path: FASTBOOT_SETUP.txt
-        retention-days: 7
-
-    - name: 14. Upload Artifacts - Build Logs
+    - name: 13. Upload Artifacts - Build Logs
       uses: actions/upload-artifact@v4
       with:
         name: build-logs
