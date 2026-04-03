@@ -32,7 +32,7 @@ jobs:
 
     - name: 5. Build Newer Kernel (V6) from loonpn/ec6108v9c-linux-kernel
       run: |
-        # Create build directory inside the workspace (safe, no sudo needed)
+        # Create build directory inside workspace (safe location)
         mkdir -p kernel_build
         cd kernel_build
         
@@ -40,32 +40,32 @@ jobs:
         git clone --single-branch --depth=1 https://github.com/loonpn/ec6108v9c-linux-kernel mv100
         cd mv100
         
-        # Copy custom DTS if available in your repo
+        # Copy custom DTS if you have it (optional but recommended)
         if [ -f "${GITHUB_WORKSPACE}/config_files/hi3798mv100-v6.dts" ]; then
           cp -f "${GITHUB_WORKSPACE}/config_files/hi3798mv100-v6.dts" \
                 arch/arm/boot/dts/hi3798mv100-ec6108v9c.dts
-          echo "Custom DTS copied successfully."
+          echo "Custom DTS applied."
         else
-          echo "Warning: Custom DTS not found. Using default DTS from kernel source."
+          echo "No custom DTS found. Using default DTS from the kernel repository."
         fi
         
-        # Configure and build the kernel
+        # Kernel configuration and build
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- hi3798mv100_defconfig
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc)
         
-        # Create uImage (required for Hi3798MV100 bootloader)
+        # Create combined zImage + DTB and then uImage (required for Hi3798MV100)
         cat arch/arm/boot/zImage arch/arm/boot/dts/hi3798mv100-ec6108v9c.dtb > zImage-dtb
         mkimage -A arm -O linux -T kernel -C none -a 0x2000000 -e 0x2000000 -n linux -d zImage-dtb uImage
         
-        # Build modules and headers
+        # Build stripped modules and headers
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=../kernel_modules modules_install
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_HDR_PATH=../kernel_headers headers_install
         
-        # Package modules + headers for later use
+        # Package modules + headers
         cd ..
         tar -zcvf linux-build.tar.gz kernel_headers kernel_modules
         
-        # Copy uImage to workspace root for easy access in later steps
+        # Copy uImage to workspace root so later steps can find it reliably
         cp mv100/uImage ${GITHUB_WORKSPACE}/new_uImage
         
         echo "Kernel build completed successfully."
@@ -80,18 +80,20 @@ jobs:
     - name: 7. Install Kernel Modules into Debian Rootfs
       run: |
         ROOTFS_DIR=$(pwd)/pure_rootfs
+     
         echo "Installing kernel modules into Debian rootfs..."
         sudo mkdir -p "$ROOTFS_DIR/lib/modules"
-      
+     
         sudo tar -xzf kernel_build/linux-build.tar.gz -C /tmp
+     
         sudo cp -a /tmp/kernel_modules/lib/modules/* "$ROOTFS_DIR/lib/modules/" || true
      
-        sudo mount -t proc /proc "$ROOTFS_DIR/proc" || true
-        sudo mount -t sysfs /sys "$ROOTFS_DIR/sys" || true
-        sudo chroot "$ROOTFS_DIR" depmod -a || echo "depmod completed with warnings (expected on cross-build)"
+        sudo mount -t proc none "$ROOTFS_DIR/proc" || true
+        sudo mount -t sysfs none "$ROOTFS_DIR/sys" || true
+        sudo chroot "$ROOTFS_DIR" depmod -a || echo "depmod warnings are normal during cross-build"
         sudo umount "$ROOTFS_DIR/proc" "$ROOTFS_DIR/sys" 2>/dev/null || true
      
-        echo "Kernel modules installed."
+        echo "Kernel modules installed successfully."
 
     - name: 8. Create Pure Rootfs Image
       run: |
