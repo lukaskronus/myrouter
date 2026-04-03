@@ -66,6 +66,7 @@ jobs:
         tar -zcvf linux-build.tar.gz kernel_headers kernel_modules
         
         # Copy uImage to workspace root so later steps can find it reliably
+        mkdir -p ${GITHUB_WORKSPACE}/new_uImage
         cp mv100/uImage ${GITHUB_WORKSPACE}/new_uImage
         
         echo "Kernel build completed successfully."
