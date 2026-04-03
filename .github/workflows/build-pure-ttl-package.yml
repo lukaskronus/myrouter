@@ -28,7 +28,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y qemu-user-static debootstrap e2fsprogs zip \
           gcc-arm-linux-gnueabihf u-boot-tools bc bison flex libssl-dev \
-          libncurses5-dev zlib1g-dev
+          libncurses5-dev zlib1g-dev device-tree-compiler
 
     - name: 5.1. Clone Kernel Repository
       run: |
@@ -36,32 +36,61 @@ jobs:
         cd kernel_build
         git clone --single-branch --depth=1 https://github.com/loonpn/ec6108v9c-linux-kernel mv100
         echo "Kernel repository cloned successfully"
-        ls -la mv100/
+        ls -la mv100/ | head -20
 
-    - name: 5.2. Prepare Kernel Configuration
+    - name: 5.2. Prepare Kernel Configuration with Custom DTS
       run: |
         cd kernel_build/mv100
-        echo "=== Available DTB files ==="
-        ls -1 arch/arm/boot/dts/hi3798mv100*.dtb 2>/dev/null || echo "No hi3798mv100 DTBs found"
         
-        # Try to copy custom DTS (if you add it later)
+        echo "=== Copying custom DTS file from config_files ==="
         if [ -f "${GITHUB_WORKSPACE}/config_files/hi3798mv100-v6.dts" ]; then
-          cp -f "${GITHUB_WORKSPACE}/config_files/hi3798mv100-v6.dts" \
-                arch/arm/boot/dts/hi3798mv100-ec6108v9c.dts
-          echo "Custom DTS copied."
+          cp -v "${GITHUB_WORKSPACE}/config_files/hi3798mv100-v6.dts" arch/arm/boot/dts/hi3798mv100-ec6108v9c.dts
+          echo "Custom DTS copied successfully"
         else
-          echo "No custom DTS found. Will use the best matching default DTB."
+          echo "WARNING: Custom DTS not found at config_files/hi3798mv100-v6.dts"
+          echo "Will use default kernel DTS"
         fi
         
-        # Configure kernel
+        echo "=== Verifying DTS files ==="
+        ls -lh arch/arm/boot/dts/hi3798mv100*.dts
+        
+        echo "=== Configuring kernel ==="
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- hi3798mv100_defconfig
+        
+        echo "=== Applying boot compatibility patches ==="
+        # Disable Thumb2 (ensure ARM mode, not Thumb)
+        sed -i 's/CONFIG_THUMB2_KERNEL=y/CONFIG_THUMB2_KERNEL=n/' .config
+        
+        # Disable unaligned memory access
+        sed -i 's/CONFIG_ALLOW_UNALIGNED_ACCESS=y/CONFIG_ALLOW_UNALIGNED_ACCESS=n/' .config
+        
+        # Ensure proper MMU settings
+        sed -i 's/CONFIG_MMU=.*/CONFIG_MMU=y/' .config
+        
+        # Disable advanced CPU features that might not be compatible
+        sed -i 's/CONFIG_NEON=y/CONFIG_NEON=n/' .config
+        sed -i 's/CONFIG_VFPv3=y/CONFIG_VFPv3=n/' .config
+        
+        # Use legacy bootloader support
+        sed -i 's/CONFIG_ATAGS=.*/CONFIG_ATAGS=y/' .config
+        sed -i 's/CONFIG_CMDLINE_FROM_BOOTLOADER=.*/CONFIG_CMDLINE_FROM_BOOTLOADER=y/' .config
+        
         echo "Kernel configuration completed"
+        echo ""
+        echo "=== Critical Boot Configuration ==="
+        grep -E "CONFIG_THUMB2_KERNEL|CONFIG_ALLOW_UNALIGNED|CONFIG_MMU|CONFIG_ATAGS|CONFIG_CMDLINE" .config
 
     - name: 5.3. Build Kernel
       run: |
         cd kernel_build/mv100
-        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc)
+        echo "Building kernel with $(nproc) CPU cores..."
+        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc) 2>&1 | tee build.log
         echo "Kernel build completed"
+        
+        # Check for build warnings/errors
+        if grep -i "error" build.log; then
+          echo "WARNING: Build errors detected"
+        fi
         
         # Verify zImage exists
         if [ ! -f "arch/arm/boot/zImage" ]; then
@@ -70,61 +99,34 @@ jobs:
         fi
         ls -lh arch/arm/boot/zImage
 
-    - name: 5.4. Find and Verify DTB File
+    - name: 5.4. Build Kernel Modules and Headers
       run: |
         cd kernel_build/mv100
-        DTB_FILE=""
-        for dtb in arch/arm/boot/dts/hi3798mv100*.dtb; do
-          if [ -f "$dtb" ]; then
-            DTB_FILE="$dtb"
-            echo "Found DTB: $DTB_FILE"
-            break
-          fi
-        done
         
-        if [ -z "$DTB_FILE" ]; then
-          echo "ERROR: No hi3798mv100 DTB file found!"
-          echo "Available DTB files:"
-          ls -1 arch/arm/boot/dts/*.dtb 2>/dev/null | head -20
-          exit 1
-        fi
+        echo "Building kernel modules..."
+        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=../kernel_modules modules_install
         
-        ls -lh "$DTB_FILE"
+        echo "Installing kernel headers..."
+        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_HDR_PATH=../kernel_headers headers_install
+        
+        echo "Modules and headers completed"
+        ls -lah ../kernel_modules/lib/modules/ 2>/dev/null | head -15
+        ls -lah ../kernel_headers/include/ 2>/dev/null | head -15
 
-    - name: 5.5. Create zImage-dtb
+    - name: 5.5. Create uImage (WITHOUT DTB - bootloader provides via ATAGS)
       run: |
         cd kernel_build/mv100
-        DTB_FILE=$(ls -1 arch/arm/boot/dts/hi3798mv100*.dtb | head -1)
         
         if [ ! -f "arch/arm/boot/zImage" ]; then
           echo "ERROR: zImage not found!"
           exit 1
         fi
         
-        cat arch/arm/boot/zImage "$DTB_FILE" > zImage-dtb
-        
-        if [ ! -f "zImage-dtb" ]; then
-          echo "ERROR: Failed to create zImage-dtb"
-          exit 1
-        fi
-        
-        echo "zImage-dtb created successfully"
-        ls -lh zImage-dtb
-
-    - name: 5.6. Create uImage with Correct Load Address
-      run: |
-        cd kernel_build/mv100
-        
-        if [ ! -f "zImage-dtb" ]; then
-          echo "ERROR: zImage-dtb not found!"
-          exit 1
-        fi
-        
-        echo "Creating uImage from zImage-dtb..."
+        echo "Creating uImage from zImage alone (DTB provided by bootloader via ATAGS)..."
         echo "  Load Address: 0x1FFFFC0 (matches bootloader: mmc read 0 0x1FFFFC0)"
         echo "  Entry Point: 0x1FFFFC0"
         
-        mkimage -A arm -O linux -T kernel -C none -a 0x1FFFFC0 -e 0x1FFFFC0 -n linux -d zImage-dtb uImage
+        mkimage -A arm -O linux -T kernel -C none -a 0x1FFFFC0 -e 0x1FFFFC0 -n linux -d arch/arm/boot/zImage uImage
         
         if [ ! -f "uImage" ]; then
           echo "ERROR: uImage was not created!"
@@ -139,26 +141,13 @@ jobs:
         file uImage
         hexdump -C uImage | head -20
 
-    - name: 5.7. Build Kernel Modules and Headers
-      run: |
-        cd kernel_build/mv100
-        
-        echo "Building kernel modules..."
-        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=../kernel_modules modules_install
-        
-        echo "Installing kernel headers..."
-        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_HDR_PATH=../kernel_headers headers_install
-        
-        echo "Modules and headers completed"
-        ls -la ../kernel_modules/ 2>/dev/null | head -10
-        ls -la ../kernel_headers/ 2>/dev/null | head -10
-
-    - name: 5.8. Package Kernel Build Artifacts
+    - name: 5.6. Package Kernel Build Artifacts
       run: |
         cd kernel_build
         
         if [ ! -d "kernel_modules" ] || [ ! -d "kernel_headers" ]; then
           echo "ERROR: kernel_modules or kernel_headers directory not found!"
+          ls -la
           exit 1
         fi
         
@@ -172,13 +161,13 @@ jobs:
         echo "Build artifacts packaged successfully"
         ls -lh linux-build.tar.gz
 
-    - name: 5.9. Copy uImage to Workspace
+    - name: 5.7. Copy uImage to Workspace
       run: |
         cd kernel_build
         
         if [ ! -f "mv100/uImage" ]; then
           echo "ERROR: uImage not found at kernel_build/mv100/uImage"
-          ls -la mv100/ | grep -i image
+          ls -la mv100/
           exit 1
         fi
         
@@ -192,7 +181,7 @@ jobs:
         echo "uImage copied to workspace successfully"
         ls -lh ${GITHUB_WORKSPACE}/new_uImage
 
-    - name: 5.10. Verify Kernel Build
+    - name: 5.8. Verify Kernel Build
       run: |
         echo "=== Kernel Build Summary ==="
         echo "Kernel release: $(cat kernel_build/mv100/include/config/kernel.release 2>/dev/null || echo 'unknown')"
@@ -259,12 +248,30 @@ jobs:
         echo "Final package created:"
         ls -lh TTL-hi3798mv100-32bit-PURE-KernelV6-*.zip
 
-    - name: 10. Upload Artifacts
+    - name: 10. Upload Artifacts - Separate Files
       uses: actions/upload-artifact@v4
       with:
-        name: pure-ttl-package-with-v6-kernel
-        path: |
-          TTL-hi3798mv100-32bit-PURE-KernelV6-*.zip
-          new_uImage
-          rootfs-32-pure.img
+        name: kernel-uimage
+        path: new_uImage
+        retention-days: 7
+
+    - name: 11. Upload Artifacts - Rootfs Image
+      uses: actions/upload-artifact@v4
+      with:
+        name: rootfs-image
+        path: rootfs-32-pure.img
+        retention-days: 7
+
+    - name: 12. Upload Artifacts - Complete TTL Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: ttl-package
+        path: TTL-hi3798mv100-32bit-PURE-KernelV6-*.zip
+        retention-days: 7
+
+    - name: 13. Upload Artifacts - Build Logs
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs
+        path: kernel_build/mv100/build.log
         retention-days: 7
