@@ -119,8 +119,8 @@ jobs:
           echo "ERROR: zImage-dtb not found!"
           exit 1
         fi
-        
-        mkimage -A arm -O linux -T kernel -C none -a 0x2000000 -e 0x2000000 -n linux -d zImage-dtb uImage
+
+        mkimage -A arm -O linux -T kernel -C none -a 0x02000000 -e 0x02000000 -n linux -d zImage-dtb uImage
         
         if [ ! -f "uImage" ]; then
           echo "ERROR: uImage was not created!"
