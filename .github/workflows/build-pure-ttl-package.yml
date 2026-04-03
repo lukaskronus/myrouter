@@ -111,7 +111,7 @@ jobs:
         echo "zImage-dtb created successfully"
         ls -lh zImage-dtb
 
-    - name: 5.6. Create uImage
+    - name: 5.6. Create uImage with Correct Load Address
       run: |
         cd kernel_build/mv100
         
@@ -119,17 +119,25 @@ jobs:
           echo "ERROR: zImage-dtb not found!"
           exit 1
         fi
-
-        mkimage -A arm -O linux -T kernel -C none -a 0x02000000 -e 0x02000000 -n linux -d zImage-dtb uImage
+        
+        echo "Creating uImage from zImage-dtb..."
+        echo "  Load Address: 0x1FFFFC0 (matches bootloader: mmc read 0 0x1FFFFC0)"
+        echo "  Entry Point: 0x1FFFFC0"
+        
+        mkimage -A arm -O linux -T kernel -C none -a 0x1FFFFC0 -e 0x1FFFFC0 -n linux -d zImage-dtb uImage
         
         if [ ! -f "uImage" ]; then
           echo "ERROR: uImage was not created!"
-          echo "mkimage output above for debugging"
           exit 1
         fi
         
         echo "uImage created successfully"
         ls -lh uImage
+        
+        echo ""
+        echo "=== uImage Header ==="
+        file uImage
+        hexdump -C uImage | head -20
 
     - name: 5.7. Build Kernel Modules and Headers
       run: |
