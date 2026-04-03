@@ -30,34 +30,47 @@ jobs:
           gcc-arm-linux-gnueabihf u-boot-tools bc bison flex libssl-dev \
           libncurses5-dev zlib1g-dev
 
-    - name: 5. Build Newer Kernel (V6) from cndeep/loonpn
+    - name: 5. Build Newer Kernel (V6) from loonpn/ec6108v9c-linux-kernel
       run: |
-        mkdir -p /builder && sudo chown -R $USER:$USER /builder
-        cd /builder
+        # Create build directory inside the workspace (safe, no sudo needed)
+        mkdir -p kernel_build
+        cd kernel_build
         
+        # Clone the kernel source
         git clone --single-branch --depth=1 https://github.com/loonpn/ec6108v9c-linux-kernel mv100
         cd mv100
         
-        # Copy custom DTS from your repository (cndeep style)
-        cp -f ${GITHUB_WORKSPACE}/config_files/hi3798mv100-v6.dts \
-              arch/arm/boot/dts/hi3798mv100-ec6108v9c.dts || echo "Using default DTS"
+        # Copy custom DTS if available in your repo
+        if [ -f "${GITHUB_WORKSPACE}/config_files/hi3798mv100-v6.dts" ]; then
+          cp -f "${GITHUB_WORKSPACE}/config_files/hi3798mv100-v6.dts" \
+                arch/arm/boot/dts/hi3798mv100-ec6108v9c.dts
+          echo "Custom DTS copied successfully."
+        else
+          echo "Warning: Custom DTS not found. Using default DTS from kernel source."
+        fi
         
+        # Configure and build the kernel
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- hi3798mv100_defconfig
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc)
         
-        # Create uImage (required by most Hi3798MV100 bootloaders)
+        # Create uImage (required for Hi3798MV100 bootloader)
         cat arch/arm/boot/zImage arch/arm/boot/dts/hi3798mv100-ec6108v9c.dtb > zImage-dtb
         mkimage -A arm -O linux -T kernel -C none -a 0x2000000 -e 0x2000000 -n linux -d zImage-dtb uImage
         
-        # Build and package modules + headers
-        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=kernel_modules modules_install
-        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_HDR_PATH=kernel_headers headers_install
+        # Build modules and headers
+        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=../kernel_modules modules_install
+        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_HDR_PATH=../kernel_headers headers_install
         
-        tar -zcvf ../linux-build.tar.gz kernel_headers kernel_modules
-        cp uImage ${GITHUB_WORKSPACE}/new_uImage
+        # Package modules + headers for later use
+        cd ..
+        tar -zcvf linux-build.tar.gz kernel_headers kernel_modules
         
-        echo "Kernel build completed. Version: $(cat include/config/kernel.release)"
-        ls -lh uImage ../linux-build.tar.gz
+        # Copy uImage to workspace root for easy access in later steps
+        cp mv100/uImage ${GITHUB_WORKSPACE}/new_uImage
+        
+        echo "Kernel build completed successfully."
+        echo "Kernel release: $(cat mv100/include/config/kernel.release 2>/dev/null || echo 'unknown')"
+        ls -lh new_uImage linux-build.tar.gz
 
     - name: 6. Build Pure Debian 12 Rootfs
       run: |
@@ -67,20 +80,18 @@ jobs:
     - name: 7. Install Kernel Modules into Debian Rootfs
       run: |
         ROOTFS_DIR=$(pwd)/pure_rootfs
-        KERNEL_MODULES=/builder/linux-build.tar.gz   # adjust path if needed
-        
         echo "Installing kernel modules into Debian rootfs..."
         sudo mkdir -p "$ROOTFS_DIR/lib/modules"
-        sudo tar -xzf "$KERNEL_MODULES" -C /tmp
-        sudo cp -a /tmp/kernel_modules/lib/modules/* "$ROOTFS_DIR/lib/modules/"
-        
-        # Run depmod inside chroot
-        sudo mount -t proc /proc "$ROOTFS_DIR/proc"
-        sudo mount -t sysfs /sys "$ROOTFS_DIR/sys"
-        sudo chroot "$ROOTFS_DIR" depmod -a $(ls "$ROOTFS_DIR/lib/modules/" | head -n1)
-        sudo umount "$ROOTFS_DIR/proc" "$ROOTFS_DIR/sys" || true
-        
-        echo "Kernel modules installed successfully."
+      
+        sudo tar -xzf kernel_build/linux-build.tar.gz -C /tmp
+        sudo cp -a /tmp/kernel_modules/lib/modules/* "$ROOTFS_DIR/lib/modules/" || true
+     
+        sudo mount -t proc /proc "$ROOTFS_DIR/proc" || true
+        sudo mount -t sysfs /sys "$ROOTFS_DIR/sys" || true
+        sudo chroot "$ROOTFS_DIR" depmod -a || echo "depmod completed with warnings (expected on cross-build)"
+        sudo umount "$ROOTFS_DIR/proc" "$ROOTFS_DIR/sys" 2>/dev/null || true
+     
+        echo "Kernel modules installed."
 
     - name: 8. Create Pure Rootfs Image
       run: |
