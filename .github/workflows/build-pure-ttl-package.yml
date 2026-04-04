@@ -77,43 +77,44 @@ jobs:
         grep -E "^CONFIG_ARM_GIC|^CONFIG_IRQCHIP|^CONFIG_MULTI_IRQ" .config
     
         echo "=== Applying boot compatibility patches ==="
-        sed -i 's/CONFIG_THUMB2_KERNEL=y/CONFIG_THUMB2_KERNEL=n/' .config
-        sed -i 's/CONFIG_ALLOW_UNALIGNED_ACCESS=y/CONFIG_ALLOW_UNALIGNED_ACCESS=n/' .config
-        sed -i 's/CONFIG_NEON=y/CONFIG_NEON=n/' .config
-        sed -i 's/CONFIG_VFPv3=y/CONFIG_VFPv3=n/' .config
-        sed -i 's/CONFIG_KERNEL_GZIP=y/CONFIG_KERNEL_GZIP=n/' .config
-        sed -i 's/CONFIG_KERNEL_BZIP2=y/CONFIG_KERNEL_BZIP2=n/' .config
+        sed -i 's/CONFIG_THUMB2_KERNEL=y/# CONFIG_THUMB2_KERNEL is not set/' .config
+        sed -i 's/CONFIG_ALLOW_UNALIGNED_ACCESS=y/# CONFIG_ALLOW_UNALIGNED_ACCESS is not set/' .config
+        sed -i 's/CONFIG_NEON=y/# CONFIG_NEON is not set/' .config
+        sed -i 's/CONFIG_VFPv3=y/# CONFIG_VFPv3 is not set/' .config
+        sed -i 's/CONFIG_KERNEL_GZIP=y/# CONFIG_KERNEL_GZIP is not set/' .config
+        sed -i 's/CONFIG_KERNEL_BZIP2=y/# CONFIG_KERNEL_BZIP2 is not set/' .config
         sed -i 's/CONFIG_ATAGS=.*/CONFIG_ATAGS=y/' .config
         sed -i 's/CONFIG_CMDLINE_FROM_BOOTLOADER=.*/CONFIG_CMDLINE_FROM_BOOTLOADER=y/' .config
-    
-        echo "=== Enabling debug options ==="
-        sed -i 's/CONFIG_DEBUG_LL=.*/CONFIG_DEBUG_LL=y/' .config
-        sed -i 's/CONFIG_EARLY_PRINTK=.*/CONFIG_EARLY_PRINTK=y/' .config
-        sed -i 's/CONFIG_DEBUG_KERNEL=.*/CONFIG_DEBUG_KERNEL=y/' .config
-        sed -i 's/CONFIG_PRINTK=.*/CONFIG_PRINTK=y/' .config
-        sed -i 's/CONFIG_DEVTMPFS_MOUNT=.*/CONFIG_DEVTMPFS_MOUNT=n/' .config
-    
-        echo "=== Enabling appended DTB support ==="
-        echo "CONFIG_ARM_APPENDED_DTB=y" >> .config
-        echo "CONFIG_ARM_ATAG_DTB_COMPAT=y" >> .config
-        echo "CONFIG_ARM_ATAG_DTB_COMPAT_CMDLINE_FROM_BOOTLOADER=y" >> .config
-    
-        echo "=== Configuring early debug UART ==="
-        scripts/config --enable DEBUG_LL
-        scripts/config --enable DEBUG_LL_UART_PL011
-        scripts/config --set-val DEBUG_UART_PHYS 0xf8b00000
-        scripts/config --set-val DEBUG_UART_VIRT 0xf8b00000
-        scripts/config --enable EARLY_PRINTK
-        scripts/config --enable DEBUG_KERNEL
-    
+        
         echo "=== Disabling PSCI (bootloader does not support it) ==="
-        sed -i 's/CONFIG_ARM_PSCI=y/CONFIG_ARM_PSCI=n/' .config
-    
-        echo "=== Enabling ARCH_HISI platform ==="
-        echo "CONFIG_ARCH_HISI=y" >> .config
-    
+        sed -i 's/CONFIG_ARM_PSCI=y/# CONFIG_ARM_PSCI is not set/' .config
+        sed -i 's/CONFIG_ARM_PSCI_FW=y/# CONFIG_ARM_PSCI_FW is not set/' .config
+        
+        echo "=== Enabling Hisilicon timer (CRITICAL - without this kernel hangs at boot) ==="
+        echo "CONFIG_HISILICON_TIMER=y" >> .config
+        
+        echo "=== Enabling appended DTB support ==="
+        cat >> .config << 'EOF'
+        CONFIG_ARM_APPENDED_DTB=y
+        CONFIG_ARM_ATAG_DTB_COMPAT=y
+        CONFIG_ARM_ATAG_DTB_COMPAT_CMDLINE_FROM_BOOTLOADER=y
+        EOF
+        
+        echo "=== Enabling early debug UART ==="
+        cat >> .config << 'EOF'
+        CONFIG_DEBUG_KERNEL=y
+        CONFIG_DEBUG_LL=y
+        CONFIG_DEBUG_LL_UART_PL011=y
+        CONFIG_DEBUG_UART_PHYS=0xf8b00000
+        CONFIG_DEBUG_UART_VIRT=0xf8b00000
+        CONFIG_EARLY_PRINTK=y
+        EOF
+        
+        echo "=== Disabling devtmpfs automount ==="
+        sed -i 's/CONFIG_DEVTMPFS_MOUNT=y/# CONFIG_DEVTMPFS_MOUNT is not set/' .config
+        
         echo "=== Final config summary ==="
-        grep -E "CONFIG_DEBUG_LL|CONFIG_EARLY_PRINTK|CONFIG_DEBUG_KERNEL|CONFIG_DEVTMPFS|CONFIG_ARM_APPENDED_DTB|CONFIG_ARM_ATAG|CONFIG_ARCH_HISI|CONFIG_ARM_PSCI|HISP804|SP804|CONFIG_ARM_GIC" .config
+        grep -E "CONFIG_ARCH_HISI|CONFIG_ARM_PSCI|CONFIG_ARM_APPENDED_DTB|CONFIG_ARM_ATAG|CONFIG_HISILICON_TIMER|CONFIG_ARM_TIMER_SP804|CONFIG_ARM_GIC|CONFIG_DEBUG_LL|CONFIG_EARLY_PRINTK|CONFIG_DEBUG_UART" .config
 
     - name: 5.4. Build Kernel
       run: |
