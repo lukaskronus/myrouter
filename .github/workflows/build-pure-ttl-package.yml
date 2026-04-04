@@ -56,7 +56,7 @@ jobs:
     - name: 5.3. Prepare Kernel Configuration with Debug Options
       run: |
         cd kernel_build/mv100
-        
+    
         echo "=== Copying custom DTS file from config_files ==="
         if [ -f "${GITHUB_WORKSPACE}/config_files/hi3798mv100-v6.dts" ]; then
           cp -v "${GITHUB_WORKSPACE}/config_files/hi3798mv100-v6.dts" arch/arm/boot/dts/hi3798mv100-ec6108v9c.dts
@@ -64,10 +64,18 @@ jobs:
           echo "ERROR: Custom DTS not found"
           exit 1
         fi
-        
+    
+        echo "=== CRITICAL: Does hi3798mv100_defconfig exist in this repo? ==="
+        ls -la arch/arm/configs/hi3798* 2>/dev/null || echo "WARNING: No hi3798 defconfig found!"
+    
         echo "=== Configuring kernel ==="
         make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- hi3798mv100_defconfig
-        
+    
+        echo "=== CRITICAL: Platform and timer config (after defconfig) ==="
+        grep -E "^CONFIG_ARCH_HISI|^CONFIG_PLAT_HI|HISP804|SP804|TIMER_OF|CLOCKSOURCE|CONFIG_HZ|CONFIG_ATAGS" .config
+        echo "=== GIC / interrupt controller ==="
+        grep -E "^CONFIG_ARM_GIC|^CONFIG_IRQCHIP|^CONFIG_MULTI_IRQ" .config
+    
         echo "=== Applying boot compatibility patches ==="
         sed -i 's/CONFIG_THUMB2_KERNEL=y/CONFIG_THUMB2_KERNEL=n/' .config
         sed -i 's/CONFIG_ALLOW_UNALIGNED_ACCESS=y/CONFIG_ALLOW_UNALIGNED_ACCESS=n/' .config
@@ -77,38 +85,35 @@ jobs:
         sed -i 's/CONFIG_KERNEL_BZIP2=y/CONFIG_KERNEL_BZIP2=n/' .config
         sed -i 's/CONFIG_ATAGS=.*/CONFIG_ATAGS=y/' .config
         sed -i 's/CONFIG_CMDLINE_FROM_BOOTLOADER=.*/CONFIG_CMDLINE_FROM_BOOTLOADER=y/' .config
-        
+    
         echo "=== Enabling debug options ==="
-        # Enable early printk for debugging
         sed -i 's/CONFIG_DEBUG_LL=.*/CONFIG_DEBUG_LL=y/' .config
         sed -i 's/CONFIG_EARLY_PRINTK=.*/CONFIG_EARLY_PRINTK=y/' .config
-        
-        # Enable kernel debugging
         sed -i 's/CONFIG_DEBUG_KERNEL=.*/CONFIG_DEBUG_KERNEL=y/' .config
         sed -i 's/CONFIG_PRINTK=.*/CONFIG_PRINTK=y/' .config
-        
-        # Disable some potentially problematic features
         sed -i 's/CONFIG_DEVTMPFS_MOUNT=.*/CONFIG_DEVTMPFS_MOUNT=n/' .config
-
+    
         echo "=== Enabling appended DTB support ==="
-        # Tell kernel to look for DTB appended to zImage
         echo "CONFIG_ARM_APPENDED_DTB=y" >> .config
         echo "CONFIG_ARM_ATAG_DTB_COMPAT=y" >> .config
-        
-        # This lets the kernel merge ATAGS bootargs with DTB chosen node
-        # so the bootloader's bootargs= still work
         echo "CONFIG_ARM_ATAG_DTB_COMPAT_CMDLINE_FROM_BOOTLOADER=y" >> .config
-
-        # Disable PSCI since bootloader doesn't support it
+    
+        echo "=== Configuring early debug UART ==="
+        scripts/config --enable DEBUG_LL
+        scripts/config --enable DEBUG_LL_UART_PL011
+        scripts/config --set-val DEBUG_UART_PHYS 0xf8b00000
+        scripts/config --set-val DEBUG_UART_VIRT 0xf8b00000
+        scripts/config --enable EARLY_PRINTK
+        scripts/config --enable DEBUG_KERNEL
+    
+        echo "=== Disabling PSCI (bootloader does not support it) ==="
         sed -i 's/CONFIG_ARM_PSCI=y/CONFIG_ARM_PSCI=n/' .config
-
-        # Make sure ARM_HISILICON platform is enabled
+    
+        echo "=== Enabling ARCH_HISI platform ==="
         echo "CONFIG_ARCH_HISI=y" >> .config
-        
-        echo "Kernel configuration completed"
-        echo ""
-        echo "=== Debug Configuration ==="
-        grep -E "CONFIG_DEBUG_LL|CONFIG_EARLY_PRINTK|CONFIG_DEBUG_KERNEL|CONFIG_PRINTK|CONFIG_DEVTMPFS" .config
+    
+        echo "=== Final config summary ==="
+        grep -E "CONFIG_DEBUG_LL|CONFIG_EARLY_PRINTK|CONFIG_DEBUG_KERNEL|CONFIG_DEVTMPFS|CONFIG_ARM_APPENDED_DTB|CONFIG_ARM_ATAG|CONFIG_ARCH_HISI|CONFIG_ARM_PSCI|HISP804|SP804|CONFIG_ARM_GIC" .config
 
     - name: 5.4. Build Kernel
       run: |
