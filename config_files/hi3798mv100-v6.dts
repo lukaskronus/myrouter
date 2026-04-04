@@ -1,493 +1,78 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
 /dts-v1/;
+#include "hi3798mv100.dtsi"
 
 / {
-	model = "Hisilicon EC6108V9C";
-	compatible = "hisilicon,hi3798mv100";
-	#address-cells = <0x01>;
-	#size-cells = <0x01>;
-	interrupt-parent = <0x01>;
-
-	/* GIC moved to root level so phandle <0x01> resolves correctly
-	 * for all nodes regardless of where they are in the tree */
-	interrupt-controller@f8a01000 {
-		reg = <0xf8a01000 0x1000 0xf8a02000 0x100>;
-		compatible = "arm,cortex-a7-gic";
-		#interrupt-cells = <0x03>;
-		#address-cells = <0x00>;
-		phandle = <0x01>;
-		interrupt-controller;
-	};
-
-    cpus {
-        #address-cells = <0x01>;
-        #size-cells = <0x00>;
-    
-        cpu@0 {
-            reg = <0x00>;
-            compatible = "arm,cortex-a7";
-            device_type = "cpu";
-        };
-    
-        cpu@1 {
-            reg = <0x01>;
-            compatible = "arm,cortex-a7";
-            device_type = "cpu";
-        };
-    
-        cpu@2 {
-            reg = <0x02>;
-            compatible = "arm,cortex-a7";
-            device_type = "cpu";
-        };
-    
-        cpu@3 {
-            reg = <0x03>;
-            compatible = "arm,cortex-a7";
-            device_type = "cpu";
-        };
-    };
-
-	/* If PSCI is not supported by the bootloader, comment out
-	 * the enable-method lines above and the psci node below,
-	 * and uncomment enable-method = "hisilicon,hi3798" instead */
-	psci {
-		compatible = "arm,psci-0.2";
-		method = "smc";
-	};
-
-	memory@0 {
-		device_type = "memory";
-		/* 1GB RAM: starts at 0x00000000, size 0x40000000 */
-		reg = <0x00 0x40000000>;
-	};
+	model = "Huawei EC6108V9C";
 
 	chosen {
-    	stdout-path = "serial0:115200n8";
-    	/* bootargs will be filled in from bootloader ATAGS automatically */
+		stdout-path = "serial0:115200n8";
 	};
 
-	clocks {
-		/* 3MHz clock */
-		clk_3m: clk-3m {
-			#clock-cells = <0x00>;
-			compatible = "fixed-clock";
-			clock-frequency = <0x2dc6c0>;
-			clock-output-names = "clk3M";
-			phandle = <0x05>;
+	leds {
+		compatible = "gpio-leds";
+		network {
+			label = "green:network";
+			gpios = <&gpio0 4 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
 		};
-
-		/* 24MHz crystal - used by most peripherals including UARTs */
-		xtal_clk: xtal-clk {
-			#clock-cells = <0x00>;
-			compatible = "fixed-clock";
-			clock-frequency = <0x16e3600>;
-			clock-output-names = "clk24M";
-			phandle = <0x02>;
+		network-activity {
+			label = "red:network";
+			gpios = <&gpio2 2 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
 		};
-
-		/* 83.3MHz clock */
-		clk_83p3m: clk-83p3m {
-			#clock-cells = <0x00>;
-			compatible = "fixed-clock";
-			clock-frequency = <0x4f70ea0>;
-			clock-output-names = "clk83.3M";
-			phandle = <0x04>;
+		ir-led {
+			label = "green:ir";
+			gpios = <&gpio5 2 GPIO_ACTIVE_HIGH>;
+			panic-indicator;
+			default-state = "off";
 		};
 	};
+};
 
-	aliases {
-		/* serial0 must match stdout-path above - this is ttyAMA0 */
-		serial0 = &uart0;
-		serial1 = &uart1;
-		serial2 = &uart2;
-		i2c0 = &i2c0;
-		i2c1 = &i2c1;
-		i2c2 = &i2c2;
-		spi0 = &spi0;
-	};
+&timer1 { status = "okay"; };
+&timer2 { status = "okay"; };
+&timer3 { status = "okay"; };
+&timer4 { status = "okay"; };
+&uart0  { status = "okay"; };
+&gpio0  { status = "okay"; };
+&gpio2  { status = "okay"; };
+&gpio5  { status = "okay"; };
+&wdt0   { status = "okay"; };
+&ir     { status = "okay"; };
+&sd     { status = "okay"; };
 
-	soc {
-		compatible = "simple-bus";
-		device_type = "soc";
-		/* Identity mapping: no address translation needed */
-		ranges;
-		#address-cells = <0x01>;
-		#size-cells = <0x01>;
+&mmc {
+	fifo-depth = <256>;
+	clock-frequency = <100000000>;
+	cap-mmc-highspeed;
+	mmc-ddr-1_8v;
+	mmc-hs200-1_8v;
+	non-removable;
+	status = "okay";
+};
 
-		hisilicon_clock: clock@f8a22000 {
-			reg = <0xf8a22000 0x200 0xf8a20000 0x848>;
-			#clock-cells = <0x01>;
-			compatible = "hi3798mv100.clock";
-			phandle = <0x03>;
-		};
+&ohci0 { status = "okay"; };
+&ehci0 { status = "okay"; };
+&ohci1 { status = "okay"; };
+&ehci1 { status = "okay"; };
 
-		amba {
-			compatible = "arm,amba-bus";
-			ranges;
-			#address-cells = <0x01>;
-			#size-cells = <0x01>;
+/*
+ * YOUR BOARD uses hisilicon,hieth not hisi-femac-v2.
+ * Override the ethernet node from the dtsi entirely.
+ * Addresses are relative to soc@f0000000 (+ 0xf0000000 offset).
+ * Your physical 0xf9840000 = 0x9840000 in soc-relative addressing.
+ * MAC address: change to match the sticker on your device.
+ */
+&eth0 {
+	compatible = "hisilicon,hieth";
+	reg = <0x9840000 0x4000>;
+	mac-address = [0C 56 5C 6A D8 FC];
+	status = "okay";
+};
 
-			gpio0: gpio@f8b20000 {
-				reg = <0xf8b20000 0x1000>;
-				interrupts = <0x00 0x6c 0x04>;
-				#gpio-cells = <0x02>;
-				compatible = "arm,pl061", "arm,primecell";
-				clock-names = "apb_pclk";
-				clocks = <0x02>;
-				#interrupt-cells = <0x02>;
-				arm,primecell-periphid = <0x41061>;
-				interrupt-controller;
-				gpio-controller;
-			};
-
-			gpio1: gpio@f8b21000 {
-				reg = <0xf8b21000 0x1000>;
-				interrupts = <0x00 0x6d 0x04>;
-				#gpio-cells = <0x02>;
-				compatible = "arm,pl061", "arm,primecell";
-				clock-names = "apb_pclk";
-				clocks = <0x02>;
-				#interrupt-cells = <0x02>;
-				arm,primecell-periphid = <0x41061>;
-				interrupt-controller;
-				gpio-controller;
-			};
-
-			gpio2: gpio@f8b22000 {
-				reg = <0xf8b22000 0x1000>;
-				interrupts = <0x00 0x6e 0x04>;
-				#gpio-cells = <0x02>;
-				compatible = "arm,pl061", "arm,primecell";
-				clock-names = "apb_pclk";
-				clocks = <0x02>;
-				#interrupt-cells = <0x02>;
-				arm,primecell-periphid = <0x41061>;
-				interrupt-controller;
-				gpio-controller;
-			};
-
-			gpio3: gpio@f8b23000 {
-				reg = <0xf8b23000 0x1000>;
-				interrupts = <0x00 0x6f 0x04>;
-				#gpio-cells = <0x02>;
-				compatible = "arm,pl061", "arm,primecell";
-				clock-names = "apb_pclk";
-				clocks = <0x02>;
-				#interrupt-cells = <0x02>;
-				arm,primecell-periphid = <0x41061>;
-				interrupt-controller;
-				gpio-controller;
-			};
-
-			gpio4: gpio@f8b24000 {
-				reg = <0xf8b24000 0x1000>;
-				interrupts = <0x00 0x70 0x04>;
-				#gpio-cells = <0x02>;
-				compatible = "arm,pl061", "arm,primecell";
-				clock-names = "apb_pclk";
-				clocks = <0x02>;
-				#interrupt-cells = <0x02>;
-				arm,primecell-periphid = <0x41061>;
-				interrupt-controller;
-				gpio-controller;
-			};
-
-			gpio5: gpio@f8004000 {
-				reg = <0xf8004000 0x1000>;
-				interrupts = <0x00 0x71 0x00>;
-				#gpio-cells = <0x02>;
-				compatible = "arm,pl061", "arm,primecell";
-				clock-names = "apb_pclk";
-				clocks = <0x02>;
-				#interrupt-cells = <0x02>;
-				arm,primecell-periphid = <0x41061>;
-				interrupt-controller;
-				gpio-controller;
-			};
-
-			gpio6: gpio@f8b26000 {
-				reg = <0xf8b26000 0x1000>;
-				interrupts = <0x00 0x72 0x04>;
-				#gpio-cells = <0x02>;
-				compatible = "arm,pl061", "arm,primecell";
-				clock-names = "apb_pclk";
-				clocks = <0x02>;
-				#interrupt-cells = <0x02>;
-				arm,primecell-periphid = <0x41061>;
-				interrupt-controller;
-				gpio-controller;
-			};
-
-			watchdog@f8a2c000 {
-				reg = <0xf8a2c000 0x1000>;
-				compatible = "arm,sp805-wdt", "arm,primecell";
-				clock-names = "apb_pclk";
-				clocks = <0x02>;
-				arm,primecell-periphid = <0x141805>;
-			};
-
-			/* Primary UART - ttyAMA0 - console */
-			uart0: uart@f8b00000 {
-				reg = <0xf8b00000 0x1000>;
-				interrupts = <0x00 0x31 0x04>;
-				compatible = "arm,pl011", "arm,primecell";
-				clock-names = "apb_pclk";
-				/* Fixed at 24MHz xtal - correct for UART baud rate generation */
-				clocks = <0x02>;
-			};
-
-			/* UART2 - ttyAMA2 */
-			uart2: uart@f8b02000 {
-				reg = <0xf8b02000 0x1000>;
-				interrupts = <0x00 0x33 0x04>;
-				compatible = "arm,pl011", "arm,primecell";
-				clock-names = "apb_pclk";
-				clocks = <0x02>;
-			};
-
-			i2c0: i2c@f8b10000 {
-				reg = <0xf8b10000 0x1000>;
-				interrupts = <0x00 0x26 0x04>;
-				compatible = "hisilicon,hi-i2c";
-				clock-names = "apb_pclk";
-				clock-frequency = <0x61a80>;
-				clocks = <0x03 0x1ac>;
-				#address-cells = <0x01>;
-				#size-cells = <0x00>;
-			};
-
-			i2c1: i2c@f8b11000 {
-				reg = <0xf8b11000 0x1000>;
-				interrupts = <0x00 0x27 0x04>;
-				compatible = "hisilicon,hi-i2c";
-				clock-names = "apb_pclk";
-				clock-frequency = <0x61a80>;
-				clocks = <0x03 0x1b0>;
-				#address-cells = <0x01>;
-				#size-cells = <0x00>;
-			};
-
-			i2c2: i2c@f8b12000 {
-				reg = <0xf8b12000 0x1000>;
-				interrupts = <0x00 0x28 0x04>;
-				compatible = "hisilicon,hi-i2c";
-				clock-names = "apb_pclk";
-				clock-frequency = <0x61a80>;
-				clocks = <0x03 0x1b4>;
-				#address-cells = <0x01>;
-				#size-cells = <0x00>;
-			};
-
-			spi0: spi@f8b1a000 {
-				reg = <0xf8b1a000 0x1000>;
-				pl022,rt;
-				interrupts = <0x00 0x2d 0x04>;
-				compatible = "arm,pl022", "arm,primecell";
-				clock-names = "apb_pclk";
-				clocks = <0x03 0x70>;
-				num-cs = <0x02>;
-				arm,primecell-periphid = <0x41022>;
-				#address-cells = <0x01>;
-				#size-cells = <0x00>;
-			};
-
-			ir@f8001000 {
-				reg = <0xf8001000 0x1000>;
-				interrupts = <0x00 0x2f 0x04>;
-				compatible = "hisilicon,hix5hd2-ir";
-				clocks = <0x03 0x1b8>;
-				linux,rc-map-name = "rc-hisi";
-			};
-
-			timer@f8a29000 {
-				reg = <0xf8a29000 0x20
-				       0xf8a2a000 0x20
-				       0xf8a2a020 0x20
-				       0xf8a2b000 0x20
-				       0xf8a2b020 0x20>;
-				interrupts = <0x00 0x1a 0x04
-					      0x00 0x3b 0x04
-					      0x00 0x1b 0x04
-					      0x00 0x3c 0x04>;
-				compatible = "hisilicon,hisp804";
-				clock-names = "apb_pclk";
-				clocks = <0x02>;
-			};
-
-			/* UART1 - ttyAMA1 - uses different base address */
-			uart1: uart@f8006000 {
-				reg = <0xf8006000 0x1000>;
-				interrupts = <0x00 0x32 0x04>;
-				compatible = "arm,pl011", "arm,primecell";
-				clock-names = "apb_pclk";
-				/* Original used clk_83p3m (0x05) which is wrong for UART.
-				 * Changed to xtal_clk (0x02) for correct baud rate. */
-				clocks = <0x02>;
-			};
-		};
-
-		/* NAND - kept for reference but will likely not have mainline driver */
-		nand@f9810000 {
-			reg = <0xf9810000 0x100 0xfe000000 0x2176>;
-			compatible = "hi3798mv100.hinfc610";
-			clock-names = "clk";
-			clocks = <0x03 0x60>;
-			status = "disabled";
-		};
-
-		/* USB OTG controller - vendor specific, disable for now */
-		usbotg@f9880000 {
-			reg = <0xf9880000 0x10000 0xf9890000 0x10000 0xf8a20120 0x04>;
-			compatible = "hiusbotg";
-			status = "disabled";
-		};
-
-		ohci@f9880000 {
-			reg = <0xf9880000 0x10000>;
-			interrupts = <0x00 0x43 0x04>;
-			compatible = "generic-ohci";
-			clock-names = "clk";
-			clocks = <0x03 0xb8>;
-		};
-
-		ohci@f9920000 {
-			reg = <0xf9920000 0x10000>;
-			interrupts = <0x00 0x3f 0x04>;
-			compatible = "generic-ohci";
-			clock-names = "clk";
-			clocks = <0x03 0x198>;
-		};
-
-		/* SD card slot */
-		mmc@f9820000 {
-			reg = <0xf9820000 0x1000>;
-			caps = <0x80000047>;
-			interrupts = <0x00 0x22 0x04>;
-			compatible = "hi3798mv100,himciv200";
-			clock-names = "clk";
-			clocks = <0x03 0x9c>;
-			max-frequency = <0x5f5e100>;
-			status = "okay";
-		};
-
-		/* eMMC - this is where the OS lives */
-		mmc@f9830000 {
-			reg = <0xf9830000 0x1000>;
-			caps = <0xc0000847>;
-			interrupts = <0x00 0x23 0x04>;
-			compatible = "hi3798mv100,himciv200";
-			clock-names = "clk";
-			clocks = <0x03 0xa0>;
-			max-frequency = <0x5f5e100>;
-			status = "okay";
-		};
-
-		/* GPU voltage regulator */
-		regulator@f8a23020 {
-			reg = <0xf8a23020 0x04>;
-			regulator-name = "vdd-gpu";
-			reg-names = "base-address";
-			compatible = "hisilicon,hi3798mv100-volt";
-			regulator-always-on;
-			regulator-min-microvolt = <0xdbba0>;
-			regulator-max-microvolt = <0x142440>;
-			status = "okay";
-			phandle = <0x07>;
-		};
-
-		xhci@f98a0000 {
-			reg = <0xf98a0000 0x10000>;
-			interrupts = <0x00 0x45 0x04>;
-			compatible = "generic-xhci";
-			clock-names = "clk";
-			clocks = <0x03 0xb0>;
-		};
-
-		ehci@f9890000 {
-			reg = <0xf9890000 0x10000>;
-			interrupts = <0x00 0x42 0x04>;
-			compatible = "generic-ehci";
-			clock-names = "clk";
-			clocks = <0x03 0xb8>;
-		};
-
-		ehci@f9930000 {
-			reg = <0xf9930000 0x10000>;
-			interrupts = <0x00 0x3e 0x04>;
-			compatible = "generic-ehci";
-			clock-names = "clk";
-			clocks = <0x03 0x198>;
-		};
-
-		/* Ethernet */
-		ethernet@f9840000 {
-			reg = <0xf9840000 0x4000>;
-			interrupts = <0x00 0x47 0x04>;
-			phy-handle = <0x06>;
-			compatible = "hisilicon,hieth";
-			clock-names = "clk";
-			clocks = <0x03 0xcc>;
-			#address-cells = <0x01>;
-			#size-cells = <0x00>;
-
-			phy@1 {
-				reg = <0x01>;
-				phy-mode = "mii";
-				/* Using a locally administered MAC address as placeholder.
-				 * The bootloader should override this. */
-				mac-address = [00 11 22 33 44 55];
-				phandle = <0x06>;
-			};
-		};
-
-		/* USB device controller */
-		usb@f98c0000 {
-			reg = <0xf98c0000 0x40000>;
-			interrupts = <0x00 0x44 0x04>;
-			compatible = "hiudc";
-			clock-names = "clk";
-			clocks = <0x03 0xb8>;
-			status = "disabled";
-		};
-
-		/* Mali GPU - mainline driver exists for mali-450 */
-		gpu@f9200000 {
-			reg = <0xf9200000 0x10000>;
-			interrupts = <0x00 0x5e 0x04>,
-				     <0x00 0x5e 0x04>,
-				     <0x00 0x5e 0x04>,
-				     <0x00 0x5e 0x04>,
-				     <0x00 0x5e 0x04>,
-				     <0x00 0x5e 0x04>,
-				     <0x00 0x5e 0x04>,
-				     <0x00 0x5e 0x04>;
-			interrupt-names = "IRQGP", "IRQGPMMU", "IRQPP0", "IRQPPMMU0",
-					  "IRQPP1", "IRQPPMMU1", "IRQPMU", "IRQPP";
-			compatible = "arm,mali-450", "arm,mali-utgard";
-			clock-names = "clk_mali";
-			clocks = <0x03 0x124>;
-			mali-supply = <0x07>;
-			#cooling-cells = <0x02>;
-			cooling-min-state = <0x00>;
-			cooling-max-state = <0x07>;
-			pmu_domain_config = <0x01 0x02 0x02 0x00 0x00 0x00
-					     0x00 0x00 0x00 0x01 0x02 0x00>;
-			pmu_switch_delay = <0x1ff>;
-			status = "okay";
-		};
-
-		/* Virtual/vendor-specific devices - kept disabled.
-		 * These are Hisilicon media engine blocks (DMX, AIAO, HDMI, VDP etc.)
-		 * They have no mainline drivers but listing them doesn't hurt. */
-		virtdev {
-			compatible = "virt-device";
-			status = "disabled";
-		};
-
-		trusted_core {
-			interrupts = <0x00 0x3d 0x04>;
-			compatible = "trusted_core";
-			status = "disabled";
-		};
-	};
+/* Disable GPU for now - known broken in loonpn's release too */
+&gpu {
+	status = "disabled";
 };

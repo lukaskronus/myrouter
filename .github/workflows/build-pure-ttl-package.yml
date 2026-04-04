@@ -92,6 +92,10 @@ jobs:
         
         echo "=== Enabling Hisilicon timer (CRITICAL - without this kernel hangs at boot) ==="
         echo "CONFIG_HISILICON_TIMER=y" >> .config
+
+        echo "CONFIG_HISI_FEMAC=y" >> .config  # for hisi-femac-v2
+        # hieth is a different driver - check if it exists in this kernel
+        grep -r "hisilicon,hieth" drivers/ --include="*.c" -l || echo "hieth driver not found in mainline!"
         
         echo "=== Enabling appended DTB support ==="
         cat >> .config << 'EOF'
@@ -145,36 +149,34 @@ jobs:
       run: |
         cd kernel_build/mv100
     
-        IMAGE="arch/arm/boot/Image"
+        ZIMAGE="arch/arm/boot/zImage"
         DTB="arch/arm/boot/dts/hi3798mv100-ec6108v9c.dtb"
     
-        IMAGE_SIZE=$(stat -c%s "$IMAGE")
+        if [ ! -f "$ZIMAGE" ]; then
+          echo "ERROR: zImage not found!"
+          ls -lh arch/arm/boot/
+          exit 1
+        fi
+    
+        ZIMAGE_SIZE=$(stat -c%s "$ZIMAGE")
         DTB_SIZE=$(stat -c%s "$DTB")
-        echo "Image size: $IMAGE_SIZE bytes (~$(( IMAGE_SIZE / 1024 / 1024 ))MB)"
-        echo "DTB size:   $DTB_SIZE bytes"
+        echo "zImage size: $ZIMAGE_SIZE bytes (~$(( ZIMAGE_SIZE / 1024 / 1024 ))MB)"
+        echo "DTB size:    $DTB_SIZE bytes"
     
-        if [ "$IMAGE_SIZE" -lt 5000000 ]; then
-          echo "ERROR: Image too small!"
+        if [ "$ZIMAGE_SIZE" -lt 3000000 ]; then
+          echo "ERROR: zImage too small, build may have failed"
           exit 1
         fi
     
-        echo "Concatenating Image + DTB..."
-        cat "$IMAGE" "$DTB" > Image-dtb
-    
-        COMBINED=$(stat -c%s Image-dtb)
-        EXPECTED=$(( IMAGE_SIZE + DTB_SIZE ))
-        if [ "$COMBINED" -ne "$EXPECTED" ]; then
-          echo "ERROR: cat failed!"
-          exit 1
-        fi
+        echo "Concatenating zImage + DTB..."
+        cat "$ZIMAGE" "$DTB" > zImage-dtb
     
         echo "Creating uImage..."
         mkimage -A arm -O linux -T kernel -C none \
           -a 0x2000000 -e 0x2000000 \
-          -n linux -d Image-dtb uImage
+          -n linux -d zImage-dtb uImage
     
         ls -lh uImage
-        echo "Expected size: ~$(( EXPECTED / 1024 / 1024 ))MB (kernel 6.x Image is smaller than 4.4)"
 
     - name: 5.6. Verify Kernel Size Fits Partition
       run: |
