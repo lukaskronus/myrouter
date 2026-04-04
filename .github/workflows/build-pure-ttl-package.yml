@@ -110,44 +110,68 @@ jobs:
         echo "=== Debug Configuration ==="
         grep -E "CONFIG_DEBUG_LL|CONFIG_EARLY_PRINTK|CONFIG_DEBUG_KERNEL|CONFIG_PRINTK|CONFIG_DEVTMPFS" .config
 
-    - name: 5.4. Build Kernel (with cache)
+    - name: 5.4. Build Kernel
       run: |
         cd kernel_build/mv100
-        
-        echo "Building kernel with $(nproc) CPU cores..."
-        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc) zImage 2>&1 | tee build.log
-        
-        if [ ! -f "arch/arm/boot/Image" ]; then
-          echo "ERROR: Image not found!"
+        echo "Building with $(nproc) cores..."
+        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc) 2>&1 | tee build.log
+    
+        echo "=== Checking outputs ==="
+        ls -lh arch/arm/boot/Image arch/arm/boot/zImage || true
+        ls -lh arch/arm/boot/dts/hi3798mv100-ec6108v9c.dtb || true
+    
+        # Fail loudly if zImage is missing
+        if [ ! -f arch/arm/boot/zImage ]; then
+          echo "ERROR: zImage not found!"
           exit 1
         fi
-        
-        ls -lh arch/arm/boot/Image
-
-    - name: 5.5. Create uImage - zImage + DTB
+        if [ ! -f arch/arm/boot/dts/hi3798mv100-ec6108v9c.dtb ]; then
+          echo "ERROR: DTB not found!"
+          exit 1
+        fi
+    
+    - name: 5.5. Create uImage
       run: |
         cd kernel_build/mv100
-
-        # Build DTBs explicitly
-        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- dtbs
-
-        DTB_FILE="arch/arm/boot/dts/hi3798mv100-ec6108v9c.dtb"
-
-        if [ ! -f "$DTB_FILE" ]; then
-          echo "ERROR: DTB not found. Available hi3798 DTBs:"
-          find arch/arm/boot/dts/ -name "hi3798*.dtb"
+    
+        ZIMAGE="arch/arm/boot/zImage"
+        DTB="arch/arm/boot/dts/hi3798mv100-ec6108v9c.dtb"
+    
+        ZIMAGE_SIZE=$(stat -c%s "$ZIMAGE")
+        DTB_SIZE=$(stat -c%s "$DTB")
+        echo "zImage size: $ZIMAGE_SIZE bytes (~$(( ZIMAGE_SIZE / 1024 / 1024 ))MB)"
+        echo "DTB size:    $DTB_SIZE bytes"
+    
+        # Sanity check - zImage must be at least 5MB for a real kernel
+        if [ "$ZIMAGE_SIZE" -lt 5000000 ]; then
+          echo "ERROR: zImage is suspiciously small - kernel may not have built correctly!"
           exit 1
         fi
-
-        echo "Combining zImage + DTB..."
-        cat arch/arm/boot/zImage "$DTB_FILE" > zImage-dtb
-
+    
+        echo "Concatenating zImage + DTB..."
+        cat "$ZIMAGE" "$DTB" > zImage-dtb
+    
+        COMBINED=$(stat -c%s zImage-dtb)
+        EXPECTED=$(( ZIMAGE_SIZE + DTB_SIZE ))
+        echo "Combined size: $COMBINED bytes (expected $EXPECTED)"
+        if [ "$COMBINED" -ne "$EXPECTED" ]; then
+          echo "ERROR: cat failed - sizes don't match!"
+          exit 1
+        fi
+    
         echo "Creating uImage..."
         mkimage -A arm -O linux -T kernel -C none \
           -a 0x2000000 -e 0x2000000 \
           -n linux -d zImage-dtb uImage
-
-        ls -lh uImage zImage-dtb
+    
+        ls -lh uImage
+        # Final check - uImage should be bigger than 7MB
+        UIMAGE_SIZE=$(stat -c%s uImage)
+        if [ "$UIMAGE_SIZE" -lt 7000000 ]; then
+          echo "ERROR: uImage too small ($UIMAGE_SIZE bytes) - something is wrong!"
+          exit 1
+        fi
+        echo "uImage looks correct at $(( UIMAGE_SIZE / 1024 / 1024 ))MB"
 
     - name: 5.6. Verify Kernel Size Fits Partition
       run: |
