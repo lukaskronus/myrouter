@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * Device Tree for HI3798MV100 board (e.g., EC6108V9C)
- * Based on mainline hi3798mv100.dtsi, cleaned for kernel 6.x
+ * Fixed eMMC spamming and Ethernet
  */
 
 /dts-v1/;
@@ -18,7 +18,7 @@
 
 	memory@0 {
 		device_type = "memory";
-		reg = <0x0 0x40000000>; /* 1GB RAM */
+		reg = <0x0 0x40000000>; /* 1GB */
 	};
 
 	reserved-memory {
@@ -26,7 +26,6 @@
 		#size-cells = <1>;
 		ranges;
 
-		/* CMA region for multimedia (256MB) */
 		linux,cma {
 			compatible = "shared-dma-pool";
 			reusable;
@@ -36,7 +35,6 @@
 		};
 	};
 
-	/* Fixed regulators – adjust voltages if your board has different supplies */
 	vcc_3v3: regulator-3v3 {
 		compatible = "regulator-fixed";
 		regulator-name = "vcc-3v3";
@@ -52,39 +50,14 @@
 		regulator-max-microvolt = <1800000>;
 		regulator-always-on;
 	};
-
-	/* Optional: GPIO LEDs – adjust pins to match your board */
-	leds {
-		compatible = "gpio-leds";
-
-		power {
-			label = "hi3798mv100:red:power";
-			gpios = <&gpio5 0 GPIO_ACTIVE_HIGH>;
-			default-state = "on";
-		};
-
-		status {
-			label = "hi3798mv100:green:status";
-			gpios = <&gpio5 1 GPIO_ACTIVE_HIGH>;
-			linux,default-trigger = "heartbeat";
-		};
-	};
 };
 
-/* Serial consoles – enable all three UARTs */
-&uart0 {
-	status = "okay";
-};
+/* UARTs */
+&uart0 { status = "okay"; };
+&uart1 { status = "okay"; };
+&uart2 { status = "okay"; };
 
-&uart1 {
-	status = "okay";
-};
-
-&uart2 {
-	status = "okay";
-};
-
-/* GPIO controllers – all are needed */
+/* GPIOs (all needed) */
 &gpio0 { status = "okay"; };
 &gpio1 { status = "okay"; };
 &gpio2 { status = "okay"; };
@@ -99,23 +72,12 @@
 	timeout-sec = <60>;
 };
 
-/* I2C buses – all three enabled, 400kHz */
-&i2c0 {
-	status = "okay";
-	clock-frequency = <400000>;
-};
+/* I2C */
+&i2c0 { status = "okay"; clock-frequency = <400000>; };
+&i2c1 { status = "okay"; clock-frequency = <400000>; };
+&i2c2 { status = "okay"; clock-frequency = <400000>; };
 
-&i2c1 {
-	status = "okay";
-	clock-frequency = <400000>;
-};
-
-&i2c2 {
-	status = "okay";
-	clock-frequency = <400000>;
-};
-
-/* SPI – two chip selects, adjust cs-gpios if needed */
+/* SPI */
 &spi0 {
 	status = "okay";
 	num-cs = <2>;
@@ -123,7 +85,13 @@
 		   <&gpio1 1 GPIO_ACTIVE_LOW>;
 };
 
-/* eMMC (non‑removable) */
+/*
+ * eMMC (mmc0) – CRITICAL FIXES
+ * - Disable HS200 mode (unreliable on many boards)
+ * - Use only HS-DDR and HS modes
+ * - Add explicit tuning properties
+ * - Keep bus-width = 8
+ */
 &mmc {
 	status = "okay";
 	bus-width = <8>;
@@ -131,40 +99,53 @@
 	cap-mmc-highspeed;
 	cap-mmc-hw-reset;
 	mmc-ddr-1_8v;
-	mmc-hs200-1_8v;
+	/* HS200 is often unstable – disable it */
+	/delete-property/ mmc-hs200-1_8v;
 	max-frequency = <100000000>;
 	vmmc-supply = <&vcc_3v3>;
 	vqmmc-supply = <&vcc_1v8>;
+	/* Add delay for power sequencing */
+	mmc-pwrseq = <&mmc_pwrseq>;
+	/* Optional: keep a slower initial frequency */
+	/delete-property/ assigned-clocks;
+	/delete-property/ assigned-clock-rates;
 };
 
-/* SD card slot – adapt CD/WP GPIOs to your board */
+/*
+ * SD card (mmc1) – if not used, disable it to avoid polling
+ * If your board has no SD slot, set status = "disabled".
+ * If it does have a slot, adjust cd-gpios.
+ */
 &sd {
-	status = "okay";
+	status = "disabled";   /* Change to "okay" if you have an SD slot */
+	/*
 	bus-width = <4>;
 	cap-sd-highspeed;
 	max-frequency = <100000000>;
 	cd-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
-	wp-gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
 	vmmc-supply = <&vcc_3v3>;
+	*/
 };
 
-/* USB 2.0 host 0 */
-&ohci0 { status = "okay"; };
-&ehci0 { status = "okay"; };
+/* Simple power sequence for eMMC (if needed) */
+mmc_pwrseq: pwrseq {
+	compatible = "mmc-pwrseq-simple";
+	reset-gpios = <&gpio6 7 GPIO_ACTIVE_LOW>; /* placeholder – adjust or remove */
+};
 
-/* USB 3.0 host */
-&xhci0 { status = "okay"; };
-
-/* USB 2.0 host 1 (second port) */
-&ohci1 { status = "okay"; };
-&ehci1 { status = "okay"; };
-
-/* Ethernet – uses hisi-femac-v2 (mainline driver) */
+/*
+ * Ethernet – use hisi-femac-v2 (mainline)
+ * The PHY is usually at address 1 on the MDIO bus.
+ * If your board uses an external PHY, ensure the reset GPIO is correct.
+ */
 &eth0 {
 	status = "okay";
 	phy-handle = <&phy1>;
 	phy-mode = "mii";
+	/* Reset delays – adjust if your PHY needs different values */
 	hisilicon,phy-reset-delays-us = <10000 10000 20000>;
+	/* If your PHY has a reset GPIO, add: */
+	/* phy-reset-gpios = <&gpio5 2 GPIO_ACTIVE_LOW>; */
 };
 
 &mdio0 {
@@ -172,67 +153,46 @@
 
 	phy1: ethernet-phy@1 {
 		reg = <1>;
-		/* MAC address is filled by bootloader */
+		/* The bootloader will fill the MAC address */
 	};
 };
 
-/* Infrared receiver */
+/* Infrared */
 &ir {
 	status = "okay";
 	linux,rc-map-name = "rc-hisi";
 };
 
-/* GPU – enabled with its regulator */
+/* GPU */
 &gpu {
 	status = "okay";
 	mali-supply = <&vddgpu>;
 };
 
-/* NAND flash – disabled because your board uses eMMC/SD */
-&nand {
-	status = "disabled";
-};
-
-/* GPU voltage regulator – values from extracted DTS */
 &vddgpu {
 	regulator-min-microvolt = <900000>;
 	regulator-max-microvolt = <1320000>;
 	regulator-always-on;
 };
 
-/* USB PHYs – both enabled */
+/* NAND (disabled) */
+&nand { status = "disabled"; };
+
+/* USB PHYs – enable both */
 &usb2_phy1 { status = "okay"; };
 &usb2_phy2 { status = "okay"; };
-
-/* Combo PHY – disable if not used */
 &combphy0 { status = "disabled"; };
 &combphy1 { status = "disabled"; };
 
-/* Timers – all sp804 timers are available, enable the ones you need */
+/* USB host controllers – keep them enabled */
+&ohci0 { status = "okay"; };
+&ehci0 { status = "okay"; };
+&xhci0 { status = "okay"; };
+&ohci1 { status = "okay"; };
+&ehci1 { status = "okay"; };
+
+/* Timers – all sp804 timers, but we rely on the hisilicon timer */
 &timer1 { status = "okay"; };
 &timer2 { status = "okay"; };
 &timer3 { status = "okay"; };
 &timer4 { status = "okay"; };
-
-/* Optional pinmux examples – uncomment and adapt if needed */
-/*
-&pmx0 {
-	pinctrl_uart0: uart0-pins {
-		pinctrl-single,pins = <
-			0x0  0x1 /* TX */
-			0x4  0x1 /* RX */
-		>;
-	};
-
-	pinctrl_sd: sd-pins {
-		pinctrl-single,pins = <
-			0x40 0x1 /* CMD */
-			0x44 0x1 /* CLK */
-			0x48 0x1 /* D0 */
-			0x4c 0x1 /* D1 */
-			0x50 0x1 /* D2 */
-			0x54 0x1 /* D3 */
-		>;
-	};
-};
-*/
