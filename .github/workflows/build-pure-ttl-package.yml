@@ -134,44 +134,36 @@ jobs:
       run: |
         cd kernel_build/mv100
     
-        ZIMAGE="arch/arm/boot/zImage"
+        IMAGE="arch/arm/boot/Image"
         DTB="arch/arm/boot/dts/hi3798mv100-ec6108v9c.dtb"
     
-        ZIMAGE_SIZE=$(stat -c%s "$ZIMAGE")
+        IMAGE_SIZE=$(stat -c%s "$IMAGE")
         DTB_SIZE=$(stat -c%s "$DTB")
-        echo "zImage size: $ZIMAGE_SIZE bytes (~$(( ZIMAGE_SIZE / 1024 / 1024 ))MB)"
-        echo "DTB size:    $DTB_SIZE bytes"
+        echo "Image size: $IMAGE_SIZE bytes (~$(( IMAGE_SIZE / 1024 / 1024 ))MB)"
+        echo "DTB size:   $DTB_SIZE bytes"
     
-        # Sanity check - zImage must be at least 5MB for a real kernel
-        if [ "$ZIMAGE_SIZE" -lt 5000000 ]; then
-          echo "ERROR: zImage is suspiciously small - kernel may not have built correctly!"
+        if [ "$IMAGE_SIZE" -lt 5000000 ]; then
+          echo "ERROR: Image too small!"
           exit 1
         fi
     
-        echo "Concatenating zImage + DTB..."
-        cat "$ZIMAGE" "$DTB" > zImage-dtb
+        echo "Concatenating Image + DTB..."
+        cat "$IMAGE" "$DTB" > Image-dtb
     
-        COMBINED=$(stat -c%s zImage-dtb)
-        EXPECTED=$(( ZIMAGE_SIZE + DTB_SIZE ))
-        echo "Combined size: $COMBINED bytes (expected $EXPECTED)"
+        COMBINED=$(stat -c%s Image-dtb)
+        EXPECTED=$(( IMAGE_SIZE + DTB_SIZE ))
         if [ "$COMBINED" -ne "$EXPECTED" ]; then
-          echo "ERROR: cat failed - sizes don't match!"
+          echo "ERROR: cat failed!"
           exit 1
         fi
     
         echo "Creating uImage..."
         mkimage -A arm -O linux -T kernel -C none \
           -a 0x2000000 -e 0x2000000 \
-          -n linux -d zImage-dtb uImage
+          -n linux -d Image-dtb uImage
     
         ls -lh uImage
-        # Final check - uImage should be bigger than 5MB
-        UIMAGE_SIZE=$(stat -c%s uImage)
-        if [ "$UIMAGE_SIZE" -lt 5000000 ]; then
-          echo "ERROR: uImage too small ($UIMAGE_SIZE bytes) - something is wrong!"
-          exit 1
-        fi
-        echo "uImage looks correct at $(( UIMAGE_SIZE / 1024 / 1024 ))MB"
+        echo "Expected size: ~$(( EXPECTED / 1024 / 1024 ))MB (kernel 6.x Image is smaller than 4.4)"
 
     - name: 5.6. Verify Kernel Size Fits Partition
       run: |
