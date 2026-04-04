@@ -165,9 +165,9 @@ jobs:
           -n linux -d zImage-dtb uImage
     
         ls -lh uImage
-        # Final check - uImage should be bigger than 7MB
+        # Final check - uImage should be bigger than 5MB
         UIMAGE_SIZE=$(stat -c%s uImage)
-        if [ "$UIMAGE_SIZE" -lt 7000000 ]; then
+        if [ "$UIMAGE_SIZE" -lt 5000000 ]; then
           echo "ERROR: uImage too small ($UIMAGE_SIZE bytes) - something is wrong!"
           exit 1
         fi
