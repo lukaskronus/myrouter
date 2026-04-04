@@ -1,91 +1,238 @@
-// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Device Tree for HI3798MV100 board (e.g., EC6108V9C)
+ * Based on mainline hi3798mv100.dtsi, cleaned for kernel 6.x
+ */
 
 /dts-v1/;
 #include "hi3798mv100.dtsi"
 
 / {
-	model = "Huawei EC6108V9C";
+	model = "Hisilicon HI3798MV100 STB";
+	compatible = "hisilicon,hi3798mv100";
 
 	chosen {
 		stdout-path = "serial0:115200n8";
+		bootargs = "console=ttyAMA0,115200 earlycon root=/dev/mmcblk0p9 rootfstype=ext4 rootwait rw";
 	};
 
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x40000000>; /* 1GB RAM */
+	};
+
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		/* CMA region for multimedia (256MB) */
+		linux,cma {
+			compatible = "shared-dma-pool";
+			reusable;
+			size = <0x10000000>;
+			alignment = <0x100000>;
+			linux,cma-default;
+		};
+	};
+
+	/* Fixed regulators – adjust voltages if your board has different supplies */
+	vcc_3v3: regulator-3v3 {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc-3v3";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-always-on;
+	};
+
+	vcc_1v8: regulator-1v8 {
+		compatible = "regulator-fixed";
+		regulator-name = "vcc-1v8";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-always-on;
+	};
+
+	/* Optional: GPIO LEDs – adjust pins to match your board */
 	leds {
 		compatible = "gpio-leds";
-		network {
-			label = "green:network";
-			gpios = <&gpio0 4 GPIO_ACTIVE_HIGH>;
-			default-state = "off";
+
+		power {
+			label = "hi3798mv100:red:power";
+			gpios = <&gpio5 0 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
 		};
-		network-activity {
-			label = "red:network";
-			gpios = <&gpio2 2 GPIO_ACTIVE_HIGH>;
-			default-state = "off";
-		};
-		ir-led {
-			label = "green:ir";
-			gpios = <&gpio5 2 GPIO_ACTIVE_HIGH>;
-			panic-indicator;
-			default-state = "off";
+
+		status {
+			label = "hi3798mv100:green:status";
+			gpios = <&gpio5 1 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "heartbeat";
 		};
 	};
 };
 
-/ {
-	aliases {
-		serial0 = &uart0;
-		mmc0 = &mmc;   /* eMMC always mmcblk0 */
-		mmc1 = &sd;    /* SD always mmcblk1 */
+/* Serial consoles – enable all three UARTs */
+&uart0 {
+	status = "okay";
+};
+
+&uart1 {
+	status = "okay";
+};
+
+&uart2 {
+	status = "okay";
+};
+
+/* GPIO controllers – all are needed */
+&gpio0 { status = "okay"; };
+&gpio1 { status = "okay"; };
+&gpio2 { status = "okay"; };
+&gpio3 { status = "okay"; };
+&gpio4 { status = "okay"; };
+&gpio5 { status = "okay"; };
+&gpio6 { status = "okay"; };
+
+/* Watchdog */
+&wdt0 {
+	status = "okay";
+	timeout-sec = <60>;
+};
+
+/* I2C buses – all three enabled, 400kHz */
+&i2c0 {
+	status = "okay";
+	clock-frequency = <400000>;
+};
+
+&i2c1 {
+	status = "okay";
+	clock-frequency = <400000>;
+};
+
+&i2c2 {
+	status = "okay";
+	clock-frequency = <400000>;
+};
+
+/* SPI – two chip selects, adjust cs-gpios if needed */
+&spi0 {
+	status = "okay";
+	num-cs = <2>;
+	cs-gpios = <&gpio1 0 GPIO_ACTIVE_LOW>,
+		   <&gpio1 1 GPIO_ACTIVE_LOW>;
+};
+
+/* eMMC (non‑removable) */
+&mmc {
+	status = "okay";
+	bus-width = <8>;
+	non-removable;
+	cap-mmc-highspeed;
+	cap-mmc-hw-reset;
+	mmc-ddr-1_8v;
+	mmc-hs200-1_8v;
+	max-frequency = <100000000>;
+	vmmc-supply = <&vcc_3v3>;
+	vqmmc-supply = <&vcc_1v8>;
+};
+
+/* SD card slot – adapt CD/WP GPIOs to your board */
+&sd {
+	status = "okay";
+	bus-width = <4>;
+	cap-sd-highspeed;
+	max-frequency = <100000000>;
+	cd-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+	wp-gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
+	vmmc-supply = <&vcc_3v3>;
+};
+
+/* USB 2.0 host 0 */
+&ohci0 { status = "okay"; };
+&ehci0 { status = "okay"; };
+
+/* USB 3.0 host */
+&xhci0 { status = "okay"; };
+
+/* USB 2.0 host 1 (second port) */
+&ohci1 { status = "okay"; };
+&ehci1 { status = "okay"; };
+
+/* Ethernet – uses hisi-femac-v2 (mainline driver) */
+&eth0 {
+	status = "okay";
+	phy-handle = <&phy1>;
+	phy-mode = "mii";
+	hisilicon,phy-reset-delays-us = <10000 10000 20000>;
+};
+
+&mdio0 {
+	status = "okay";
+
+	phy1: ethernet-phy@1 {
+		reg = <1>;
+		/* MAC address is filled by bootloader */
 	};
 };
 
+/* Infrared receiver */
+&ir {
+	status = "okay";
+	linux,rc-map-name = "rc-hisi";
+};
+
+/* GPU – enabled with its regulator */
+&gpu {
+	status = "okay";
+	mali-supply = <&vddgpu>;
+};
+
+/* NAND flash – disabled because your board uses eMMC/SD */
+&nand {
+	status = "disabled";
+};
+
+/* GPU voltage regulator – values from extracted DTS */
+&vddgpu {
+	regulator-min-microvolt = <900000>;
+	regulator-max-microvolt = <1320000>;
+	regulator-always-on;
+};
+
+/* USB PHYs – both enabled */
+&usb2_phy1 { status = "okay"; };
+&usb2_phy2 { status = "okay"; };
+
+/* Combo PHY – disable if not used */
+&combphy0 { status = "disabled"; };
+&combphy1 { status = "disabled"; };
+
+/* Timers – all sp804 timers are available, enable the ones you need */
 &timer1 { status = "okay"; };
 &timer2 { status = "okay"; };
 &timer3 { status = "okay"; };
 &timer4 { status = "okay"; };
-&uart0  { status = "okay"; };
-&gpio0  { status = "okay"; };
-&gpio2  { status = "okay"; };
-&gpio5  { status = "okay"; };
-&wdt0   { status = "okay"; };
-&ir     { status = "okay"; };
-&sd     { status = "okay"; };
 
-&mmc {
-	fifo-depth = <256>;
-	clock-frequency = <100000000>;
-	cap-mmc-highspeed;
-	mmc-ddr-1_8v;
-	mmc-hs200-1_8v;
-	non-removable;
-	status = "okay";
-};
-
-&ohci0 { status = "okay"; };
-&ehci0 { status = "okay"; };
-&ohci1 { status = "okay"; };
-&ehci1 { status = "okay"; };
-
+/* Optional pinmux examples – uncomment and adapt if needed */
 /*
- * YOUR BOARD uses hisilicon,hieth not hisi-femac-v2.
- * Override the ethernet node from the dtsi entirely.
- * Addresses are relative to soc@f0000000 (+ 0xf0000000 offset).
- * Your physical 0xf9840000 = 0x9840000 in soc-relative addressing.
- * MAC address: change to match the sticker on your device.
- */
-&eth0 {
-	compatible = "hisilicon,hieth";
-	reg = <0x9840000 0x4000>;
-	mac-address = [0C 56 5C 6A D8 FC];
-	status = "okay";
-};
+&pmx0 {
+	pinctrl_uart0: uart0-pins {
+		pinctrl-single,pins = <
+			0x0  0x1 /* TX */
+			0x4  0x1 /* RX */
+		>;
+	};
 
-/* Disable GPU for now - known broken in loonpn's release too */
-&gpu {
-	status = "disabled";
+	pinctrl_sd: sd-pins {
+		pinctrl-single,pins = <
+			0x40 0x1 /* CMD */
+			0x44 0x1 /* CLK */
+			0x48 0x1 /* D0 */
+			0x4c 0x1 /* D1 */
+			0x50 0x1 /* D2 */
+			0x54 0x1 /* D3 */
+		>;
+	};
 };
-
-&sd {
-	broken-cd;
-	status = "okay";
-};
+*/
