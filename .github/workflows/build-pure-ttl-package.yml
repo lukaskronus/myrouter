@@ -101,6 +101,11 @@ jobs:
         EOF
         
         echo "=== Enabling early debug UART ==="
+        # Remove any existing DEBUG_LL entries to avoid conflicts
+        sed -i '/CONFIG_DEBUG_LL/d' .config
+        sed -i '/CONFIG_DEBUG_UART/d' .config
+        sed -i '/CONFIG_EARLY_PRINTK/d' .config
+        # Now append clean values
         cat >> .config << 'EOF'
         CONFIG_DEBUG_KERNEL=y
         CONFIG_DEBUG_LL=y
