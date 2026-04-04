@@ -89,6 +89,21 @@ jobs:
         
         # Disable some potentially problematic features
         sed -i 's/CONFIG_DEVTMPFS_MOUNT=.*/CONFIG_DEVTMPFS_MOUNT=n/' .config
+
+        echo "=== Enabling appended DTB support ==="
+        # Tell kernel to look for DTB appended to zImage
+        echo "CONFIG_ARM_APPENDED_DTB=y" >> .config
+        echo "CONFIG_ARM_ATAG_DTB_COMPAT=y" >> .config
+        
+        # This lets the kernel merge ATAGS bootargs with DTB chosen node
+        # so the bootloader's bootargs= still work
+        echo "CONFIG_ARM_ATAG_DTB_COMPAT_CMDLINE_FROM_BOOTLOADER=y" >> .config
+
+        # Disable PSCI since bootloader doesn't support it
+        sed -i 's/CONFIG_ARM_PSCI=y/CONFIG_ARM_PSCI=n/' .config
+
+        # Make sure ARM_HISILICON platform is enabled
+        echo "CONFIG_ARCH_HISI=y" >> .config
         
         echo "Kernel configuration completed"
         echo ""
