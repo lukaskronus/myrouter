@@ -17,6 +17,52 @@ jobs:
         wget --no-check-certificate -c "https://node4.histb.com:9088/update/system/TTL-hi3798mv100-32bit.zip" -O original_ttl.zip
         unzip -l original_ttl.zip | head -10
 
+    - name: 2b. Download and inspect loonpn's working kernel for reference
+      run: |
+        # Download loonpn's known-working kernel
+        wget -q "https://github.com/loonpn/ec6108v9c-linux-kernel/releases/download/v6.14.3/uImage" \
+          -O loonpn_reference_uImage
+    
+        echo "=== loonpn's working uImage ==="
+        python3 -c "
+        import struct, os
+        with open('loonpn_reference_uImage', 'rb') as f:
+            hdr = f.read(64)
+            f.seek(64)
+            payload_start = f.read(32)
+        magic,crc,ts,size,load,ep,dcrc = struct.unpack('>IIIIIII', hdr[:28])
+        ostype,arch,imgtype,comp = struct.unpack('BBBB', hdr[28:32])
+        name = hdr[32:64].rstrip(b'\x00').decode('ascii','replace')
+        comp_names={0:'none',1:'gzip',2:'bzip2',3:'lzma'}
+        print(f'Size:      {size} bytes = {size/1024/1024:.2f} MB')
+        print(f'Load addr: 0x{load:08x}')
+        print(f'Entry pt:  0x{ep:08x}')
+        print(f'Compress:  {comp_names.get(comp,comp)}')
+        print(f'Name:      {name}')
+        print()
+        print('First 32 bytes of payload:')
+        for i in range(0,32,4):
+            b = payload_start[i:i+4]
+            w = struct.unpack('<I',b)[0]
+            print(f'  {i:04x}: {\" \".join(f\"{x:02x}\" for x in b)}  (0x{w:08x})')
+    
+        # Check for DTB
+        fsize = os.path.getsize('loonpn_reference_uImage')
+        with open('loonpn_reference_uImage','rb') as f:
+            f.seek(max(0, fsize-200000))
+            tail = f.read()
+        pos = tail.rfind(b'\xd0\x0d\xfe\xed')
+        if pos >= 0:
+            abs_pos = fsize - len(tail) + pos
+            with open('loonpn_reference_uImage','rb') as f:
+                f.seek(abs_pos)
+                dtb_hdr = f.read(8)
+            dtb_size = struct.unpack('>II', dtb_hdr)[1]
+            print(f'DTB at offset 0x{abs_pos:x}, size {dtb_size} bytes')
+        else:
+            print('No DTB appended')
+        "
+
     - name: 3. Extract Original Package
       run: |
         mkdir -p ttl_template
