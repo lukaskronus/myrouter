@@ -100,7 +100,7 @@ jobs:
         cd kernel_build/mv100
         
         echo "Building kernel with $(nproc) CPU cores..."
-        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc) 2>&1 | tee build.log
+        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j$(nproc) zImage 2>&1 | tee build.log
         
         if [ ! -f "arch/arm/boot/Image" ]; then
           echo "ERROR: Image not found!"
@@ -109,19 +109,30 @@ jobs:
         
         ls -lh arch/arm/boot/Image
 
-    - name: 5.5. Create uImage - UNCOMPRESSED Kernel
+    - name: 5.5. Create uImage - zImage + DTB
       run: |
         cd kernel_build/mv100
-        
-        echo "Creating uImage from UNCOMPRESSED Image..."
-        mkimage -A arm -O linux -T kernel -C none -a 0x2000000 -e 0x2000000 -n linux -d arch/arm/boot/Image uImage
-        
-        if [ ! -f "uImage" ]; then
-          echo "ERROR: uImage was not created!"
+
+        # Build DTBs explicitly
+        make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- dtbs
+
+        DTB_FILE="arch/arm/boot/dts/hi3798mv100-ec6108v9c.dtb"
+
+        if [ ! -f "$DTB_FILE" ]; then
+          echo "ERROR: DTB not found. Available hi3798 DTBs:"
+          find arch/arm/boot/dts/ -name "hi3798*.dtb"
           exit 1
         fi
-        
-        ls -lh uImage
+
+        echo "Combining zImage + DTB..."
+        cat arch/arm/boot/zImage "$DTB_FILE" > zImage-dtb
+
+        echo "Creating uImage..."
+        mkimage -A arm -O linux -T kernel -C none \
+          -a 0x2000000 -e 0x2000000 \
+          -n linux -d zImage-dtb uImage
+
+        ls -lh uImage zImage-dtb
 
     - name: 5.6. Verify Kernel Size Fits Partition
       run: |
